@@ -1,14 +1,5 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package drools_robocode;
+package baguette;
 
-/**
- * Funciones auxiliares para menejar angulos, distancias, puntos, etc.
- * Extraidas de <a href="http://www.robocode-argentina.com.ar/descargas/trig.doc">Robocode Argentina</a>
- * @author ribadas
- */
 public class Auxiliar {
 
 	/**

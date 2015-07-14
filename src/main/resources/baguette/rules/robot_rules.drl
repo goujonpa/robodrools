@@ -1,6 +1,6 @@
-package drools_robocode
+package baguette
 
-import drools_robocode.*;
+import baguette.*;
 import robocode.*;
 import robocode.ScannedRobotEvent;
 

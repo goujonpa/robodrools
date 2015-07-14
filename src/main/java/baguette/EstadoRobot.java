@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package drools_robocode;
+package baguette;
 
 import robocode.AdvancedRobot;
 

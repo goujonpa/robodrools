@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package drools_robocode;
+package baguette;
 
 import java.util.List;
 import java.util.Vector;
@@ -18,13 +14,10 @@ import org.drools.runtime.rule.QueryResultsRow;
 
 import robocode.*;
 
-/**
- *
- * @author ribadas
- */
+
 public class ComprobarReglas {
 
-    public static String FICHERO_REGLAS = "drools_robocode/reglas/reglas_robot.drl";
+    public static String FICHERO_REGLAS = "baguette/reglas/reglas_robot.drl";
     public static String CONSULTA_ACCIONES = "consulta_acciones";
     private KnowledgeBuilder kbuilder;
     private KnowledgeBase kbase;                // Base de conocimientos
@@ -81,7 +74,7 @@ public class ComprobarReglas {
         Accion accion;
         Vector<Accion> listaAcciones = new Vector<Accion>();
 
-        for (QueryResultsRow resultado : ksession.getQueryResults(RobotDrools.CONSULTA_ACCIONES)) {
+        for (QueryResultsRow resultado : ksession.getQueryResults(Baguette.CONSULTA_ACCIONES)) {
             accion = (Accion) resultado.get("accion");  // Obtener el objeto accion
             accion.setRobot(null);                      // Vincularlo al robot actual
             listaAcciones.add(accion);

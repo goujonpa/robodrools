@@ -1,16 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-package drools_robocode;
+package baguette;
 
 import robocode.AdvancedRobot;
 
-/**
- *
- * @author ribadas
- */
 public class Accion {
     private int        tipo;
     private double     parametro;

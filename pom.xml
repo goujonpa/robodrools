@@ -2,11 +2,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cinufpe-if684</groupId>
-	<artifactId>robocode-drools</artifactId>
+	<artifactId>baguette</artifactId>
 	<version>0.0.1-SNAPSHOT</version>	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<robocode.robot.path>H:/robocode/robots</robocode.robot.path>
+		<robocode.robot.path>C:\WORKSPACE\ROBOCODE\drools\robocode\robots</robocode.robot.path>
 	</properties>
 	
 	
@@ -119,5 +119,6 @@
         </executions>
       </plugin>
     </plugins>
+	<defaultGoal>install</defaultGoal>
   </build>
 </project>

@@ -1,10 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package drools_robocode;
+package baguette;
 
 import java.util.Vector;
+import java.awt.Color;
+import java.awt.geom.Point2D;
 import org.drools.KnowledgeBase;
 import org.drools.KnowledgeBaseFactory;
 import org.drools.builder.KnowledgeBuilder;
@@ -26,72 +24,84 @@ import robocode.RobotStatus;
 import robocode.ScannedRobotEvent;
 import robocode.StatusEvent;
 
-/**
- *
- * @author ribadas
- */
-public class RobotDrools extends AdvancedRobot {
 
-    public static String FICHERO_REGLAS = "drools_robocode/reglas/reglas_robot.drl";
-    public static String CONSULTA_ACCIONES = "consulta_acciones";
+public class Baguette extends AdvancedRobot {
+
+    public static String RULES_FILE = "baguette/rules/robot_rules.drl";
+    public static String CONSULT_ACTIONS = "Consulting actions";
     
+    // KBUILDER : knowledge builder. Takes a .drl file in INPUT and OUTPUTS a knowledge package that the kbase can handle
     private KnowledgeBuilder kbuilder;
-    private KnowledgeBase kbase;   // Base de conocimeintos
-    private StatefulKnowledgeSession ksession;  // Memoria activa
-    private Vector<FactHandle> referenciasHechosActuales = new Vector<FactHandle>();
+    
+    // KBASE : knowledge base. Contains rules, processes, functions and types models
+    // Does not contain runtime infos.
+    private KnowledgeBase kbase;
+    
+    // KSESSION : class used to dialog with the rules engine
+    private StatefulKnowledgeSession ksession;
+    
+    
+    private Vector<FactHandle> currentReferencedFacts = new Vector<FactHandle>();
 
     
-    public RobotDrools(){
+    public Baguette(){
+    	// Nothing in constructor
     }
     
-    @Override
+
     public void run() {
-    	DEBUG.habilitarModoDebug(System.getProperty("robot.debug", "true").equals("true"));    	
+    	DEBUG.enableDebugMode(System.getProperty("robot.debug", "true").equals("true"));    	
 
-    	// Crear Base de Conocimiento y cargar reglas
-    	crearBaseConocimiento();
+    	// Creates a knowledge base
+    	createKnowledgeBase();
+    	
+        // COLORS
+        setBodyColor(Color.blue);
+        setGunColor(Color.white);
+        setRadarColor(Color.red);
+        setScanColor(Color.white);
+        setBulletColor(Color.red);
 
-        // Hacer que movimiento de tanque, radar y cañon sean independientes
+        // Make any movement from tank, radar or gun independent
         setAdjustGunForRobotTurn(true);
         setAdjustRadarForGunTurn(true);
         setAdjustRadarForRobotTurn(true);
 
 
         while (true) {
-        	DEBUG.mensaje("inicio turno");
-            //cargarEventos();  // se hace en los metodos onXXXXXEvent()
-            cargarEstadoRobot();
-            cargarEstadoBatalla();
+        	DEBUG.message("TURN BEGINS");
+            loadRobotState();// HEHRHUHDUHDHUDHUDUHDSHUSUH
+            loadBattleState();
 
-            // Lanzar reglas
-            DEBUG.mensaje("hechos en memoria activa");
-            DEBUG.volcarHechos(ksession);           
+            // Fire rules
+            DEBUG.message("Facts in active memory");
+            DEBUG.printFacts(ksession);           
             ksession.fireAllRules();
-            limpiarHechosIteracionAnterior();
+            cleanAnteriorFacts();
 
-            // Recuperar acciones
-            Vector<Accion> acciones = recuperarAcciones();
-            DEBUG.mensaje("acciones resultantes");
-            DEBUG.volcarAcciones(acciones);
+            // Get Actions
+            Vector<Accion> actions = loadActions();
+            DEBUG.message("Resulting Actions");
+            DEBUG.printActions(actions);
 
-            // Ejecutar Acciones
+            // Execute Actions
             ejecutarAcciones(acciones);
-        	DEBUG.mensaje("fin turno\n");
-            execute();  // Informa a robocode del fin del turno (llamada bloqueante)
+        	DEBUG.message("fin turno\n");
+            execute();  // Informs the robocode that the turn ended (blocking call)
 
         }
 
     }
 
 
-    private void crearBaseConocimiento() {
-        String ficheroReglas = System.getProperty("robot.reglas", RobotDrools.FICHERO_REGLAS);
+    private void createKnowledgeBase() {
+        String rulesFile = System.getProperty("robot.reglas", Baguette.RULES_FILE);
 
         DEBUG.mensaje("crear base de conocimientos");
         kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         
         DEBUG.mensaje("cargar reglas desde "+ficheroReglas);
-        kbuilder.add(ResourceFactory.newClassPathResource(ficheroReglas, RobotDrools.class), ResourceType.DRL);
+        kbuilder.add(ResourceFactory.newClassPathResource(ficheroReglas, Baguette.class), ResourceType.DRL);
         if (kbuilder.hasErrors()) {
             System.err.println(kbuilder.getErrors().toString());
         }
@@ -105,32 +115,32 @@ public class RobotDrools extends AdvancedRobot {
 
 
 
-    private void cargarEstadoRobot() {
+    private void loadRobotState() {
     	EstadoRobot estadoRobot = new EstadoRobot(this);
-        referenciasHechosActuales.add(ksession.insert(estadoRobot));
+    	currentReferencedFacts.add(ksession.insert(estadoRobot));
     }
 
-    private void cargarEstadoBatalla() {
+    private void loadBattleState() {
         EstadoBatalla estadoBatalla =
                 new EstadoBatalla(getBattleFieldWidth(), getBattleFieldHeight(),
                 getNumRounds(), getRoundNum(),
                 getTime(),
                 getOthers());
-        referenciasHechosActuales.add(ksession.insert(estadoBatalla));
+        currentReferencedFacts.add(ksession.insert(estadoBatalla));
     }
 
-    private void limpiarHechosIteracionAnterior() {
-        for (FactHandle referenciaHecho : this.referenciasHechosActuales) {
+    private void cleanAnteriorFacts() {
+        for (FactHandle referenciaHecho : this.currentReferencedFacts) {
             ksession.retract(referenciaHecho);
         }
-        this.referenciasHechosActuales.clear();
+        this.currentReferencedFacts.clear();
     }
 
-    private Vector<Accion> recuperarAcciones() {
+    private Vector<Accion> loadActions() {
         Accion accion;
         Vector<Accion> listaAcciones = new Vector<Accion>();
 
-        for (QueryResultsRow resultado : ksession.getQueryResults(RobotDrools.CONSULTA_ACCIONES)) {
+        for (QueryResultsRow resultado : ksession.getQueryResults(Baguette.CONSULT_ACTIONS)) {
             accion = (Accion) resultado.get("accion");  // Obtener el objeto accion
             accion.setRobot(this);                      // Vincularlo al robot actual
             listaAcciones.add(accion);
@@ -146,46 +156,36 @@ public class RobotDrools extends AdvancedRobot {
         }
     }
 
-    // Insertar en la memoria activa los distintos tipos de eventos recibidos 
-    @Override
+    // Insert in memory the different happening events
     public void onBulletHit(BulletHitEvent event) {
-          referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
 
-    @Override
     public void onBulletHitBullet(BulletHitBulletEvent event) {
-        referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
 
-    @Override
     public void onBulletMissed(BulletMissedEvent event) {
-        referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
 
-    @Override
     public void onHitByBullet(HitByBulletEvent event) {
-        referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
 
-    @Override
     public void onHitRobot(HitRobotEvent event) {
-        referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
 
-    @Override
     public void onHitWall(HitWallEvent event) {
-        referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
 
-    @Override
     public void onRobotDeath(RobotDeathEvent event) {
-        referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
 
-    @Override
     public void onScannedRobot(ScannedRobotEvent event) {
-        referenciasHechosActuales.add(ksession.insert(event));
+    	currentReferencedFacts.add(ksession.insert(event));
     }
-
-
 }
