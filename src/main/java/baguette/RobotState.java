@@ -11,7 +11,7 @@ import robocode.AdvancedRobot;
  *
  * @author ribadas
  */
-public class EstadoRobot {
+public class RobotState {
     private final double distanceRemaining;
     private final double energy;
     private final double gunHeading;
@@ -29,7 +29,7 @@ public class EstadoRobot {
     private final double velocity;
     private final double x;
 
-    public EstadoRobot(AdvancedRobot robot){
+    public RobotState(AdvancedRobot robot){
         distanceRemaining = robot.getDistanceRemaining();
         energy = robot.getEnergy();
         gunHeading = robot.getGunHeading();

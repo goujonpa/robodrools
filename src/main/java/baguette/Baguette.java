@@ -80,13 +80,13 @@ public class Baguette extends AdvancedRobot {
             cleanAnteriorFacts();
 
             // Get Actions
-            Vector<Accion> actions = loadActions();
+            Vector<Action> actions = loadActions();
             DEBUG.message("Resulting Actions");
             DEBUG.printActions(actions);
 
             // Execute Actions
-            ejecutarAcciones(acciones);
-        	DEBUG.message("fin turno\n");
+            executeActions(actions);
+        	DEBUG.message("TURN ENDS\n");
             execute();  // Informs the robocode that the turn ended (blocking call)
 
         }
@@ -95,13 +95,13 @@ public class Baguette extends AdvancedRobot {
 
 
     private void createKnowledgeBase() {
-        String rulesFile = System.getProperty("robot.reglas", Baguette.RULES_FILE);
+        String rulesFile = System.getProperty("robot.rules", Baguette.RULES_FILE);
 
-        DEBUG.mensaje("crear base de conocimientos");
+        DEBUG.message("Creating knowledge base");
         kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         
-        DEBUG.mensaje("cargar reglas desde "+ficheroReglas);
-        kbuilder.add(ResourceFactory.newClassPathResource(ficheroReglas, Baguette.class), ResourceType.DRL);
+        DEBUG.message("Loading rules since "+rulesFile);
+        kbuilder.add(ResourceFactory.newClassPathResource(rulesFile, Baguette.class), ResourceType.DRL);
         if (kbuilder.hasErrors()) {
             System.err.println(kbuilder.getErrors().toString());
         }
@@ -109,50 +109,54 @@ public class Baguette extends AdvancedRobot {
         kbase = KnowledgeBaseFactory.newKnowledgeBase();
         kbase.addKnowledgePackages(kbuilder.getKnowledgePackages());
         
-        DEBUG.mensaje("crear sesion (memoria activa)");
+        DEBUG.message("Creating session)");
         ksession = kbase.newStatefulKnowledgeSession();
     }
 
 
 
     private void loadRobotState() {
-    	EstadoRobot estadoRobot = new EstadoRobot(this);
-    	currentReferencedFacts.add(ksession.insert(estadoRobot));
+    	RobotState robotState = new RobotState(this);
+    	currentReferencedFacts.add(ksession.insert(robotState));
     }
 
     private void loadBattleState() {
-        EstadoBatalla estadoBatalla =
-                new EstadoBatalla(getBattleFieldWidth(), getBattleFieldHeight(),
-                getNumRounds(), getRoundNum(),
-                getTime(),
-                getOthers());
-        currentReferencedFacts.add(ksession.insert(estadoBatalla));
+        BattleState battleState =
+                new BattleState(
+                		getBattleFieldWidth(), 
+                		getBattleFieldHeight(),
+                		getNumRounds(), 
+                		getRoundNum(),
+                		getTime(),
+                		getOthers()
+        );
+        currentReferencedFacts.add(ksession.insert(battleState));
     }
 
     private void cleanAnteriorFacts() {
-        for (FactHandle referenciaHecho : this.currentReferencedFacts) {
-            ksession.retract(referenciaHecho);
+        for (FactHandle referencedFact : this.currentReferencedFacts) {
+            ksession.retract(referencedFact);
         }
         this.currentReferencedFacts.clear();
     }
 
-    private Vector<Accion> loadActions() {
-        Accion accion;
-        Vector<Accion> listaAcciones = new Vector<Accion>();
+    private Vector<Action> loadActions() {
+        Action action;
+        Vector<Action> actionsList = new Vector<Action>();
 
-        for (QueryResultsRow resultado : ksession.getQueryResults(Baguette.CONSULT_ACTIONS)) {
-            accion = (Accion) resultado.get("accion");  // Obtener el objeto accion
-            accion.setRobot(this);                      // Vincularlo al robot actual
-            listaAcciones.add(accion);
-            ksession.retract(resultado.getFactHandle("accion")); // Eliminar el hecho de la memoria activa
+        for (QueryResultsRow result : ksession.getQueryResults(Baguette.CONSULT_ACTIONS)) {
+            action = (Action) result.get("action");  			// get the Action object
+            action.setRobot(this);                      		// link it to the current robot
+            actionsList.add(action);
+            ksession.retract(result.getFactHandle("action")); 	// clears the fact from the active memory
         }
 
-        return listaAcciones;
+        return actionsList;
     }
 
-    private void ejecutarAcciones(Vector<Accion> acciones) {
-        for (Accion accion : acciones) {
-            accion.iniciarEjecucion();
+    private void executeActions(Vector<Action> actions) {
+        for (Action action : actions) {
+            action.initExecution();
         }
     }
 

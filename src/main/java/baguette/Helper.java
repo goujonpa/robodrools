@@ -1,6 +1,6 @@
 package baguette;
 
-public class Auxiliar {
+public class Helper {
 
 	/**
 	 * Calcula el angulo absolulo a partir de un angulo absoluto base y un angulo relativo (desplazamiento)

@@ -28,9 +28,9 @@ public final class DEBUG {
 		}		
 	}
 
-	public static void printActions(List<Accion> acciones) {
+	public static void printActions(List<Action> acciones) {
 		if (enabledDebugMode){
-			for (Accion a: acciones){
+			for (Action a: acciones){
 				System.out.println("  "+a.toString());				
 			}
 		}		

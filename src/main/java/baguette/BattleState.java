@@ -9,7 +9,7 @@ package baguette;
  *
  * @author ribadas
  */
-public class EstadoBatalla {
+public class BattleState {
     private double anchoCampo;
     private double altoCampo;
     private int numeroRondas;
@@ -17,7 +17,7 @@ public class EstadoBatalla {
     private long tiempo;
     private int numeroEnemigos;
 
-    public EstadoBatalla(double anchoCampo, double altoCampo, int numeroRondas, int rondaActual, long tiempo, int numeroEnemigos) {
+    public BattleState(double anchoCampo, double altoCampo, int numeroRondas, int rondaActual, long tiempo, int numeroEnemigos) {
         this.anchoCampo = anchoCampo;
         this.altoCampo = altoCampo;
         this.numeroRondas = numeroRondas;

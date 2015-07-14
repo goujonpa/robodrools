@@ -15,7 +15,7 @@ import org.drools.runtime.rule.QueryResultsRow;
 import robocode.*;
 
 
-public class ComprobarReglas {
+public class RulesChecker {
 
     public static String FICHERO_REGLAS = "baguette/reglas/reglas_robot.drl";
     public static String CONSULTA_ACCIONES = "consulta_acciones";
@@ -24,7 +24,7 @@ public class ComprobarReglas {
     private StatefulKnowledgeSession ksession;  // Memoria activa
     private Vector<FactHandle> referenciasHechosActuales = new Vector<FactHandle>();
 
-    public ComprobarReglas() {
+    public RulesChecker() {
     	String modoDebug = System.getProperty("robot.debug", "true");
     	DEBUG.habilitarModoDebug(modoDebug.equals("true"));
         crearBaseConocimiento();
@@ -40,7 +40,7 @@ public class ComprobarReglas {
         DEBUG.mensaje("hechos en memoria activa");
         DEBUG.volcarHechos(ksession);
         ksession.fireAllRules();
-        List<Accion> acciones = recuperarAcciones();
+        List<Action> acciones = recuperarAcciones();
         DEBUG.mensaje("acciones resultantes");
         DEBUG.volcarAcciones(acciones);
         
@@ -48,13 +48,13 @@ public class ComprobarReglas {
 
     private void crearBaseConocimiento() {
     	String ficheroReglas;
-    	ficheroReglas = System.getProperty("robot.reglas", ComprobarReglas.FICHERO_REGLAS);
+    	ficheroReglas = System.getProperty("robot.reglas", RulesChecker.FICHERO_REGLAS);
     	
     	DEBUG.mensaje("crear base de conocimientos");
         kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         
     	DEBUG.mensaje("cargar reglas desde "+ficheroReglas);
-        kbuilder.add(ResourceFactory.newClassPathResource(ficheroReglas,ComprobarReglas.class), ResourceType.DRL);
+        kbuilder.add(ResourceFactory.newClassPathResource(ficheroReglas,RulesChecker.class), ResourceType.DRL);
         if (kbuilder.hasErrors()) {
             System.err.println(kbuilder.getErrors().toString());
         }
@@ -67,15 +67,15 @@ public class ComprobarReglas {
     }
 
     public static void main(String args[]) {
-        ComprobarReglas d = new ComprobarReglas();
+        RulesChecker d = new RulesChecker();
     }
 
-    private List<Accion> recuperarAcciones() {
-        Accion accion;
-        Vector<Accion> listaAcciones = new Vector<Accion>();
+    private List<Action> recuperarAcciones() {
+        Action accion;
+        Vector<Action> listaAcciones = new Vector<Action>();
 
         for (QueryResultsRow resultado : ksession.getQueryResults(Baguette.CONSULTA_ACCIONES)) {
-            accion = (Accion) resultado.get("accion");  // Obtener el objeto accion
+            accion = (Action) resultado.get("accion");  // Obtener el objeto accion
             accion.setRobot(null);                      // Vincularlo al robot actual
             listaAcciones.add(accion);
             ksession.retract(resultado.getFactHandle("accion")); // Eliminar el hecho de la memoria activa
