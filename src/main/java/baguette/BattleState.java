@@ -1,78 +1,67 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package baguette;
 
-/**
- *
- * @author ribadas
- */
 public class BattleState {
-    private double anchoCampo;
-    private double altoCampo;
-    private int numeroRondas;
-    private int rondaActual;
-    private long tiempo;
-    private int numeroEnemigos;
+    private double fieldWidth;
+    private double fieldHeight;
+    private int roundNumber;
+    private int currentRound;
+    private long time;
+    private int enemyNumber;
 
-    public BattleState(double anchoCampo, double altoCampo, int numeroRondas, int rondaActual, long tiempo, int numeroEnemigos) {
-        this.anchoCampo = anchoCampo;
-        this.altoCampo = altoCampo;
-        this.numeroRondas = numeroRondas;
-        this.rondaActual = rondaActual;
-        this.tiempo = tiempo;
-        this.numeroEnemigos = numeroEnemigos;
+    public BattleState(double fieldWidth, double fieldHeight, int roundNumber, int currentRound, long time, int enemyNumber) {
+        this.fieldWidth = fieldWidth;
+        this.fieldHeight = fieldHeight;
+        this.roundNumber = roundNumber;
+        this.currentRound = currentRound;
+        this.time = time;
+        this.enemyNumber = enemyNumber;
     }
 
-    public double getAltoCampo() {
-        return altoCampo;
+    public double getFieldHeight() {
+        return fieldHeight;
     }
 
-    public void setAltoCampo(double altoCampo) {
-        this.altoCampo = altoCampo;
+    public void setFieldHeight(double fieldHeight) {
+        this.fieldHeight = fieldHeight;
     }
 
-    public double getAnchoCampo() {
-        return anchoCampo;
+    public double getFieldWidth() {
+        return fieldWidth;
     }
 
-    public void setAnchoCampo(double anchoCampo) {
-        this.anchoCampo = anchoCampo;
+    public void setFieldWidth(double fieldWidth) {
+        this.fieldWidth = fieldWidth;
     }
 
-    public int getNumeroEnemigos() {
-        return numeroEnemigos;
+    public int getEnemyNumber() {
+        return enemyNumber;
     }
 
-    public void setNumeroEnemigos(int numeroEnemigos) {
-        this.numeroEnemigos = numeroEnemigos;
+    public void setEnemyNumber(int enemyNumber) {
+        this.enemyNumber = enemyNumber;
     }
 
-    public int getNumeroRondas() {
-        return numeroRondas;
+    public int getRoundNumber() {
+        return roundNumber;
     }
 
-    public void setNumeroRondas(int numeroRondas) {
-        this.numeroRondas = numeroRondas;
+    public void setRoundNumber(int roundNumber) {
+        this.roundNumber = roundNumber;
     }
 
-    public int getRondaActual() {
-        return rondaActual;
+    public int getCurrentRound() {
+        return currentRound;
     }
 
-    public void setRondaActual(int rondaActual) {
-        this.rondaActual = rondaActual;
+    public void setCurrentRound(int currentRound) {
+        this.currentRound = currentRound;
     }
 
-    public long getTiempo() {
-        return tiempo;
+    public long getTime() {
+        return time;
     }
 
-    public void setTiempo(long tiempo) {
-        this.tiempo = tiempo;
-    }
-    
-    
+    public void setTime(long time) {
+        this.time = time;
+    }  
 }
