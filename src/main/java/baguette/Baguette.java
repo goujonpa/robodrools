@@ -28,7 +28,7 @@ import robocode.StatusEvent;
 public class Baguette extends AdvancedRobot {
 
     public static String RULES_FILE = "baguette/rules/robot_rules.drl";
-    public static String CONSULT_ACTIONS = "consult_action";
+    public static String CONSULT_ACTIONS = "consult_actions";
     
     // KBUILDER : knowledge builder. Takes a .drl file in INPUT and OUTPUTS a knowledge package that the kbase can handle
     private KnowledgeBuilder kbuilder;
@@ -50,7 +50,7 @@ public class Baguette extends AdvancedRobot {
     
 
     public void run() {
-    	DEBUG.enableDebugMode(System.getProperty("robot.debug", "true").equals("true"));    	
+    	DEBUG.enableDebugMode(System.getProperty("robot.debug", "true").equals("true"));
 
     	// Creates a knowledge base
     	createKnowledgeBase();

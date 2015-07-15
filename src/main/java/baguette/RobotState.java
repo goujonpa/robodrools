@@ -2,10 +2,6 @@ package baguette;
 
 import robocode.AdvancedRobot;
 
-/**
- *
- * @author ribadas
- */
 public class RobotState {
     private final double distanceRemaining;
     private final double energy;
@@ -108,7 +104,7 @@ public class RobotState {
     }
 
     public String toString(){
-    	return "Estado(x:"+x+", y:"+y+", velocity:"+velocity+
+    	return "State(x:"+x+", y:"+y+", velocity:"+velocity+
     	                     ", energy:"+energy+", heading:"+heading+
     	                     ", distanceRemaining:"+distanceRemaining+")";
     	

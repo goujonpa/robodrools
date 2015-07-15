@@ -17,7 +17,7 @@ import robocode.*;
 public class RulesChecker {
 
     public static String RULES_FILE = "baguette/rules/robot_rules.drl";
-    public static String CONSULT_ACTIONS = "consult_action";
+    public static String CONSULT_ACTIONS = "consult_actions";
     private KnowledgeBuilder kbuilder;
     private KnowledgeBase kbase;
     private StatefulKnowledgeSession ksession;

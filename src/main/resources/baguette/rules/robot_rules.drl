@@ -5,175 +5,169 @@ import robocode.*;
 import robocode.ScannedRobotEvent;
 
 
-// Se debe incluir SIEMPRE la definición de esta consulta, la usa el robot para recuperar las acciones
-query "consulta_acciones"
-  accion: Accion()
+// This defition has to be included everytime, to allow the robot consulting the actions
+query "consult_actions"
+  action: Action()
 end
 
 
 // 
-// REGLAS
+////// RULES
 //
 
 
-// Hecho para almacenar informacion de la victima seleccionada (si existe)
-declare Victima
-   nombre: String
+// Used to store the victim's informations (if selected)
+declare Victim
+   name: String
    x: double
    y: double
-   distancia: double
+   distance: double
 end
 
 
-// Regla de conveniencia: elimina acciones del mismo tipo con menor prioridad
-// Si no se hiciera el robot ejecutaría la última acción insertada sin atender a su pioridad
-rule "depurar acciones del mismo tipo"
+// Convenience Rule: Eliminate actions with the same type if lower priority
+// If that wasn't done, the robot would execute the last action inserted
+rule "Clean actions with same type"
 when
-	$accion1: Accion($tipo: tipo, $prioridad1: prioridad)
-	$accion2: Accion(tipo==$tipo, $prioridad2: prioridad)
-	eval ($prioridad1 > $prioridad2)
+	$action1: Action($type: type, $priority1: priority)
+	$action2: Action(type==$type, $priority2: priority)
+	eval ($priority1 > $priority2)
 then
-    retract($accion2);     // Elimina la accion menos prioritaria 
-    System.out.println("regla 1");
+    retract($action2);     // Removes action with worst priority
+    System.out.println("Rule 1");
 end
 
-// Cuando no hay robots detectados forzar un giro completo del radar
-rule "sin robots a la vista -> giro completo del radar"
+
+// When there's no robot detected, force a complete turn of radar
+rule "No detected robot -> radar complete turn"
 when
 	not (exists ScannedRobotEvent())
 then
-	insert (new Accion(Accion.GIRAR_RADAR_DER, 360, 1));
-	System.out.println("regla 2");
+	insert (new Action(Action.RADAR_RIGHT, 360, 1));
+	System.out.println("Rule 2");
 end
 
-// // No necesaria ¿?
-//rule "sin victima fijada -> giro completo del radar"
-//when
-//      not (exists Victima())
-//then
-//      insert (new Accion(Accion.GIRAR_RADAR_DER, 360, 1));
-//      System.out.println("regla 2-bis");
-//end
 
-// Cuando esta parado y no hay victima girar radar 360 y moverse al azar
-rule "parado sin victima -> moverse al azar (girar+avanzar)"
+// when stopped, and no victim detected, turns the radar and makes random movement
+rule "stopped without victim -> random move and turn radar"
 when
-  EstadoRobot( distanceRemaining == 0 )
-  not (exists Victima())
-  $batalla: EstadoBatalla()
+  RobotState(distanceRemaining == 0)
+  not (exists Victim())
+  $battle: BattleState()
 then
-  insert(new Accion(Accion.GIRAR_RADAR_DER, 360, 1));
-  insert(new Accion(Accion.GIRAR_TANQUE_DER, (360*Math.random() - 180), 1));
-  insert(new Accion(Accion.GIRAR_CANON_DER, (360*Math.random() - 180), 1));
-  double avance = Math.min($batalla.getAnchoCampo(), $batalla.getAltoCampo())*Math.random();
-  insert(new Accion(Accion.AVANZAR, avance, 1));
-  System.out.println("regla 3");
+  insert(new Action(Action.RADAR_RIGHT, 360, 1));
+  insert(new Action(Action.TANK_RIGHT, (360*Math.random() - 180), 1));
+  insert(new Action(Action.GUN_RIGHT, (360*Math.random() - 180), 1));
+  double dist = Math.min($battle.getFieldWidth(), $battle.getFieldHeight())*Math.random();
+  insert(new Action(Action.AHEAD, dist, 1));
+  System.out.println("Rule 3");
 end
 
 
-// Victima detectada por radar, actualizar su localizacion e ir hacia ella apuntándola con cañon y radar
-rule "victima detectada -> actualizar datos e ir hacia ella"
+// Detected victim : actualise its position and get close to it pointing gun and radar on it
+rule "Detected victim -> follow it with gun and radar pointed"
    when
-      $datosVictima: Victima ($nombreVictima: nombre)
-      $status : EstadoRobot()
-      $victimaEscaneada: ScannedRobotEvent(name == $nombreVictima)
+      $victimData : Victim ($victimName: name)
+      $status : RobotState()
+      $scannedVictim: ScannedRobotEvent(name == $victimName)
    then
-      double anguloAbsoluto = Auxiliar.anguloAbsoluto($status.getHeading(), $victimaEscaneada.getBearing());
-      $datosVictima.setX(Auxiliar.calcularX($status.getX(), anguloAbsoluto, $victimaEscaneada.getDistance()));                                            
-      $datosVictima.setY(Auxiliar.calcularX($status.getY(), anguloAbsoluto, $victimaEscaneada.getDistance()));
-      $datosVictima.setDistancia($victimaEscaneada.getDistance());
+      double absoluteAngle = Helper.absoluteAngle($status.getHeading(), $scannedVictim.getBearing());
+      $victimData.setX(Helper.calculateX($status.getX(), absoluteAngle, $scannedVictim.getDistance()));                                            
+      $victimData.setY(Helper.calculateY($status.getY(), absoluteAngle, $scannedVictim.getDistance()));
+      $victimData.setDistance($scannedVictim.getDistance());
       
-      insert(new Accion(Accion.GIRAR_TANQUE_DER, $victimaEscaneada.getBearing(), 1));
-      double anguloRelativoCanon = Auxiliar.anguloRelativo($status.getHeading(), $status.getGunHeading()); // Descontar el desplazam. actual del canon 
-      insert(new Accion(Accion.GIRAR_CANON_DER, ($victimaEscaneada.getBearing() - anguloRelativoCanon), 1));
-      double anguloRelativoRadar =  Auxiliar.anguloRelativo($status.getHeading(), $status.getRadarHeading()); // Descontar el desplazam. actual del radar  
-      insert(new Accion(Accion.GIRAR_RADAR_DER, ($victimaEscaneada.getBearing() - anguloRelativoRadar), 1));
-      insert(new Accion(Accion.AVANZAR, ($victimaEscaneada.getDistance()-100), 1));
+      insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
+      double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
+      insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
+      double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
+      insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
+      insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));
 end
 
 
 
-// Victima detectada por radar, si está en el punto de mira (anguloRelativoCañón == anguloRelativoVictima) con un margen de 2 grados, disparar con el maximo disponible
-//  (se activará a lavez que la regla anterior)
-rule "victima en punto de mira -> disparar"
+// Victim detected
+// If relative gun angle equals the relative victim angle, with a 2 grad marge
+// Shoot with max power
+// (anterior rule will be overwritten)
+rule "Victim in front of gun -> shoot"
    when
-      $status : EstadoRobot()
-      Victima ($nombreVictima: nombre)
-      // Victima detectada y cañon apunta en su angulo (con un margen de 2 grados)
-      ScannedRobotEvent(name == $nombreVictima, $anguloRelativoVictima: bearing)                       
-      eval (Math.abs($anguloRelativoVictima - Auxiliar.anguloRelativo($status.getHeading(), $status.getGunHeading())) <= 2)   
+      $status : RobotState()
+      Victim ($victimName: name)
+      // Victim detected and pointed by gun (+- 2grad)
+      ScannedRobotEvent(name == $victimName, $victimRelativeAngle: bearing)                       
+      eval (Math.abs($victimRelativeAngle - Helper.relativeAngle($status.getHeading(), $status.getGunHeading())) <= 2)   
    then
-      insert(new Accion(Accion.DISPARAR, Math.min(Rules.MAX_BULLET_POWER, 0.10*$status.getEnergy()), 1));
-      System.out.println("Victima "+$nombreVictima+" a tiro => disparar");
+      insert(new Action(Action.SHOOT, Math.min(Rules.MAX_BULLET_POWER, 0.10*$status.getEnergy()), 1));
+      System.out.println("Victim "+$victimName+" pointed => SHOOT");
 end
 
 
 
-// Cuando no hay una víctima señalada y se escanea un robot,  anotarlo como víctima e ir hacia él apuntando radar y cañón
-rule "sin victima -> tomar la primera que aparezca"
+// When no victim is detected, and a robot is scanned, set him as victim and begin to follow
+rule "Without victim -> set the first detected"
 when
-	not (exists Victima())
-	$victimaEscaneada: ScannedRobotEvent()
-	$status: EstadoRobot()
+	not (exists Victim())
+	$scannedVictim: ScannedRobotEvent()
+	$status: RobotState()
 then
-    Victima victima = new Victima();
-      double anguloAbsoluto = Auxiliar.anguloAbsoluto($status.getHeading(), $victimaEscaneada.getBearing());
-      victima.setNombre($victimaEscaneada.getName());
-      victima.setX(Auxiliar.calcularX($status.getX(), anguloAbsoluto, $victimaEscaneada.getDistance()));                                            
-      victima.setY(Auxiliar.calcularX($status.getY(), anguloAbsoluto, $victimaEscaneada.getDistance()));
-      victima.setDistancia($victimaEscaneada.getDistance());
-      insert(victima);
+    Victim victim = new Victim();
+      double absoluteAngle = Helper.absoluteAngle($status.getHeading(), $scannedVictim.getBearing());
+      victim.setName($scannedVictim.getName());
+      victim.setX(Helper.calculateX($status.getX(), absoluteAngle, $scannedVictim.getDistance()));                                            
+      victim.setY(Helper.calculateY($status.getY(), absoluteAngle, $scannedVictim.getDistance()));
+      victim.setDistance($scannedVictim.getDistance());
+      insert(victim);
       
-      insert(new Accion(Accion.GIRAR_TANQUE_DER, $victimaEscaneada.getBearing(), 1));
-      double anguloRelativoCanon = Auxiliar.anguloRelativo($status.getHeading(), $status.getGunHeading()); // Descontar el desplazam. actual del canon 
-      insert(new Accion(Accion.GIRAR_CANON_DER, ($victimaEscaneada.getBearing() - anguloRelativoCanon), 1));
-      double anguloRelativoRadar =  Auxiliar.anguloRelativo($status.getHeading(), $status.getRadarHeading()); // Descontar el desplazam. actual del radar  
-      insert(new Accion(Accion.GIRAR_RADAR_DER, ($victimaEscaneada.getBearing() - anguloRelativoRadar), 1));
-      insert(new Accion(Accion.AVANZAR, ($victimaEscaneada.getDistance()-100), 1));    
-      System.out.println("regla 6"); 
+      insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
+      double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
+      insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
+      double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
+      insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
+      insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));    
+      System.out.println("Rule 6"); 
 end
 
-// Eliminar el hecho Victima() actual una vez liquidada
-rule "muerte de la victima"
+
+// Eliminate current Victim() Fact when killed
+rule "Victim's death"
 when
-   $victima: Victima ($nombreVictima: nombre)
-   RobotDeathEvent( name == $nombreVictima )
+   $victim: Victim ($victimName: name)
+   RobotDeathEvent( name == $victimName )
 then 
-   retract($victima);
-   System.out.println("Uno menos");
+   retract($victim);
+   System.out.println("Tchau");
 end
 
 
-// Al chocar con un muro, salir "rebotado" en el angulo opuesto
-//   (tiene prioridad 5 para evitar que otras acciones "normales" nos hagan quedar estancados)  
-rule "choque con muro"
+// When a wall is touched, reboot to the opposed angle
+rule "Wall touched"
 when
-   HitWallEvent($anguloRelativo: bearing)
+   HitWallEvent($relativeAngle: bearing)
 then
-   insert(new Accion(Accion.GIRAR_TANQUE_DER, (- $anguloRelativo), 5));
-   insert(new Accion(Accion.AVANZAR, 100, 5));
+   insert(new Action(Action.TANK_RIGHT, (- $relativeAngle), 5));
+   insert(new Action(Action.AHEAD, 100, 5));
 end
 
 
-// Al chocar con victima, retroceder
-//   (tiene prioridad 5 para evitar que otras acciones "normales" nos hagan quedar estancados)  
-rule "choque con victima"
+// When touching a victim, go back
+rule "Victim touched"
 when
-   HitRobotEvent($nombre: name, $anguloRelativo: bearing)
-   Victima(nombre == $nombre)
+   HitRobotEvent($name: name, $relativeAngle: bearing)
+   Victim(name == $name)
 then
-   insert(new Accion(Accion.RETROCEDER, 100, 5));
+   insert(new Action(Action.BACK, 100, 5));
 end
 
-// Al chocar con otro robot que no sea la víctima (o si esta no existe), salir "rebotado" en el angulo opuesto
-//   (tiene prioridad 5 para evitar que otras acciones "normales" nos hagan quedar estancados)  
-rule "choque con otro robot"
+
+// When touching an enemy robot, which isn't the victim, reboot in the opposed angle
+rule "Not victim robot touched"
 when
-   HitRobotEvent($nombre: name, $anguloRelativo: bearing)
-   (or (not (exists Victima()))
-       (Victima(nombre != $nombre)))
+   HitRobotEvent($name: name, $relativeAngle: bearing)
+   (or (not (exists Victim()))
+       (Victim(name != $name)))
 then
-   insert(new Accion(Accion.GIRAR_TANQUE_DER, (- $anguloRelativo*1.50), 5));
-   insert(new Accion(Accion.AVANZAR, 100, 5));
+   insert(new Action(Action.TANK_RIGHT, (- $relativeAngle*1.50), 5));
+   insert(new Action(Action.AHEAD, 100, 5));
 end
 

@@ -32,7 +32,7 @@ public class Helper {
     }
 
     // calculate a point's y from its base x , an angle and a distance
-    public static double calcularY(double yBase, double absoluteAngle, double distance) {
+    public static double calculateY(double yBase, double absoluteAngle, double distance) {
         double offsetY = (Math.cos(Math.toRadians(absoluteAngle)) * distance);
         return yBase + offsetY;
     }
