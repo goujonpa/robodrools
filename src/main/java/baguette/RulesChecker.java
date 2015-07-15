@@ -14,47 +14,46 @@ import org.drools.runtime.rule.QueryResultsRow;
 
 import robocode.*;
 
-
 public class RulesChecker {
 
-    public static String FICHERO_REGLAS = "baguette/reglas/reglas_robot.drl";
-    public static String CONSULTA_ACCIONES = "consulta_acciones";
+    public static String RULES_FILE = "baguette/rules/robot_rules.drl";
+    public static String CONSULT_ACTIONS = "consult_action";
     private KnowledgeBuilder kbuilder;
-    private KnowledgeBase kbase;                // Base de conocimientos
-    private StatefulKnowledgeSession ksession;  // Memoria activa
-    private Vector<FactHandle> referenciasHechosActuales = new Vector<FactHandle>();
+    private KnowledgeBase kbase;
+    private StatefulKnowledgeSession ksession;
+    private Vector<FactHandle> currentReferencedFacts = new Vector<FactHandle>();
 
     public RulesChecker() {
-    	String modoDebug = System.getProperty("robot.debug", "true");
-    	DEBUG.habilitarModoDebug(modoDebug.equals("true"));
-        crearBaseConocimiento();
-        cargarEventos();
+    	String debugMode = System.getProperty("robot.debug", "true");
+    	DEBUG.enableDebugMode(debugMode.equals("true"));
+        createKnowledgeBase();
+        loadEvents();
     }
 
-	public void cargarEventos() {
+	public void loadEvents() {
 		ScannedRobotEvent e = new ScannedRobotEvent("pepe", 100, 10, 10, 10, 10);
-        FactHandle referenciaHecho = ksession.insert(e);
-        referenciasHechosActuales.add(referenciaHecho);
-        // anadir mas hechos ....
+        FactHandle referencedFact = ksession.insert(e);
+        currentReferencedFacts.add(referencedFact);
+        // add more facts ....
         
-        DEBUG.mensaje("hechos en memoria activa");
-        DEBUG.volcarHechos(ksession);
+        DEBUG.message("Facts in active memory");
+        DEBUG.printFacts(ksession);
         ksession.fireAllRules();
-        List<Action> acciones = recuperarAcciones();
-        DEBUG.mensaje("acciones resultantes");
-        DEBUG.volcarAcciones(acciones);
+        List<Action> actions = loadActions();
+        DEBUG.message("Resulting actions");
+        DEBUG.printActions(actions);
         
 	}
 
-    private void crearBaseConocimiento() {
-    	String ficheroReglas;
-    	ficheroReglas = System.getProperty("robot.reglas", RulesChecker.FICHERO_REGLAS);
+    private void createKnowledgeBase() {
+    	String rulesFile;
+    	rulesFile = System.getProperty("robot.reglas", RulesChecker.RULES_FILE);
     	
-    	DEBUG.mensaje("crear base de conocimientos");
+    	DEBUG.message("Creating knowledge base");
         kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         
-    	DEBUG.mensaje("cargar reglas desde "+ficheroReglas);
-        kbuilder.add(ResourceFactory.newClassPathResource(ficheroReglas,RulesChecker.class), ResourceType.DRL);
+    	DEBUG.message("Load rules from "+rulesFile);
+        kbuilder.add(ResourceFactory.newClassPathResource(rulesFile, RulesChecker.class), ResourceType.DRL);
         if (kbuilder.hasErrors()) {
             System.err.println(kbuilder.getErrors().toString());
         }
@@ -62,7 +61,7 @@ public class RulesChecker {
         kbase = KnowledgeBaseFactory.newKnowledgeBase();
         kbase.addKnowledgePackages( kbuilder.getKnowledgePackages() );
 
-        DEBUG.mensaje("crear sesion (memoria activa)");
+        DEBUG.message("Creating Session");
         ksession = kbase.newStatefulKnowledgeSession();
     }
 
@@ -70,19 +69,17 @@ public class RulesChecker {
         RulesChecker d = new RulesChecker();
     }
 
-    private List<Action> recuperarAcciones() {
-        Action accion;
-        Vector<Action> listaAcciones = new Vector<Action>();
+    private List<Action> loadActions() {
+        Action action;
+        Vector<Action> actionsList = new Vector<Action>();
 
-        for (QueryResultsRow resultado : ksession.getQueryResults(Baguette.CONSULTA_ACCIONES)) {
-            accion = (Action) resultado.get("accion");  // Obtener el objeto accion
-            accion.setRobot(null);                      // Vincularlo al robot actual
-            listaAcciones.add(accion);
-            ksession.retract(resultado.getFactHandle("accion")); // Eliminar el hecho de la memoria activa
+        for (QueryResultsRow result : ksession.getQueryResults(Baguette.CONSULT_ACTIONS)) {
+            action = (Action) result.get("action");  
+            action.setRobot(null); 
+            actionsList.add(action);
+            ksession.retract(result.getFactHandle("action"));
         }
 
-        return listaAcciones;
+        return actionsList;
     }
 }
-
-

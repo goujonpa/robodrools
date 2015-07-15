@@ -28,7 +28,7 @@ import robocode.StatusEvent;
 public class Baguette extends AdvancedRobot {
 
     public static String RULES_FILE = "baguette/rules/robot_rules.drl";
-    public static String CONSULT_ACTIONS = "Consulting actions";
+    public static String CONSULT_ACTIONS = "consult_action";
     
     // KBUILDER : knowledge builder. Takes a .drl file in INPUT and OUTPUTS a knowledge package that the kbase can handle
     private KnowledgeBuilder kbuilder;
