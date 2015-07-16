@@ -80,7 +80,7 @@ public class Action {
     public String toString(){
         String strType="";
             switch (this.type) {
-                case Action.SHOOT:strType="Shoot"; break;
+                case Action.SHOOT: strType="Shoot"; break;
                 case Action.AHEAD: strType="Going Ahead"; break;
                 case Action.BACK: strType="Going Back"; break;
                 case Action.STOP: strType="Stop"; break;

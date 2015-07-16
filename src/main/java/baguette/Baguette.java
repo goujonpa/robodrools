@@ -70,15 +70,16 @@ public class Baguette extends AdvancedRobot {
 
         while (true) {
         	DEBUG.message("TURN BEGINS");
-            loadRobotState();// HEHRHUHDUHDHUDHUDUHDSHUSUH
+            loadRobotState();
             loadBattleState();
 
             // Fire rules
             DEBUG.message("Facts in active memory");
             DEBUG.printFacts(ksession);           
             ksession.fireAllRules();
-            cleanAnteriorFacts();
-
+            cleanAnteriorFacts(); // does it allow to get a stateful session ??
+            // doesn't seem to affect the "victim" fact in the kbase...
+            
             // Get Actions
             Vector<Action> actions = loadActions();
             DEBUG.message("Resulting Actions");

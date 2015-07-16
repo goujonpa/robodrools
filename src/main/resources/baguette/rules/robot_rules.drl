@@ -22,6 +22,18 @@ declare Victim
    x: double
    y: double
    distance: double
+   nextX: double
+   nextY: double
+   energy: double
+end
+
+declare Status
+	energy: double
+	others: int
+	x: double
+	y: double
+	nextX: double
+	nextY: double
 end
 
 
@@ -36,6 +48,23 @@ then
     retract($action2);     // Removes action with worst priority
     System.out.println("Rule 1");
 end
+
+
+// When no internal status, create one
+rule "Without victim -> set the first detected"
+when
+	not (exists Status())
+	$status: RobotState()
+then
+    Status status = new Status();
+    status.setEnergy($status.getEnergy());
+    status.setOthers($status.getOthers());
+    status.setX($status.getX());
+    status.setY($status.getY());
+    insert(Status);
+    System.out.println("Status created"); 
+end
+
 
 
 // When there's no robot detected, force a complete turn of radar

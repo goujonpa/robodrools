@@ -15,6 +15,7 @@ import org.drools.runtime.rule.QueryResultsRow;
 import robocode.*;
 
 public class RulesChecker {
+	// class from which is adapted the baguette
 
     public static String RULES_FILE = "baguette/rules/robot_rules.drl";
     public static String CONSULT_ACTIONS = "consult_actions";
