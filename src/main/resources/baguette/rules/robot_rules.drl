@@ -5,7 +5,7 @@ import robocode.*;
 import robocode.ScannedRobotEvent;
 
 
-// This defition has to be included everytime, to allow the robot consulting the actions
+// This definition has to be included everytime, to allow the robot consulting the actions
 query "consult_actions"
   action: Action()
 end
