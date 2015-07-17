@@ -53,21 +53,11 @@ declare Status
 end
 
 
-// Convenience Rule: Eliminate actions with the same type if lower priority
-// If that wasn't done, the robot would execute the last action inserted
-rule "Clean actions with same type"
-	when
-		$action1: Action($type: type, $priority1: priority)
-		$action2: Action(type==$type, $priority2: priority)
-		eval ($priority1 > $priority2)
-	then
-	    retract($action2);     // Removes action with worst priority
-	    System.out.println("Cleaning <priority actions");
-end
-
+// ========== STATUS RULES ==========
 
 // when no internal status, create it
 rule "Without status -> create one"
+	salience 100
 	when 
 		not (exists Status())
 		$status: RobotState()
@@ -98,7 +88,9 @@ end
 
 // when internal status, update it
 rule "With status -> update it"
+	salience 99
 	when
+		exists Status()
 		$prevStatus: Status()
 		$newStatus: RobotState()
 	then
@@ -119,146 +111,90 @@ rule "With status -> update it"
 		$prevStatus.setTurnRemaining($newStatus.getTurnRemaining());
 		$prevStatus.setVelocity($newStatus.getVelocity());
 	    System.out.println("Internal status updated"); 
+	    System.out.println($newStatus.getTime()); 
 end		
 
 
-// When there's no robot detected, force a complete turn of radar
-rule "No detected robot -> radar complete turn"
-	when
-		not (exists Victim())
-	then
-		insert (new Action(Action.RADAR_RIGHT, 360, 1));
-		System.out.println("Radar complete turn initialised");
-end
-
-
-// when stopped, and no victim detected, turns the radar and makes random movement
-rule "stopped without victim -> random move and turn radar"
-	when
-	  RobotState(distanceRemaining == 0)
-	  not (exists Victim())
-	  $battle: BattleState()
-	then
-	  insert(new Action(Action.RADAR_RIGHT, 360, 1));
-	  insert(new Action(Action.TANK_RIGHT, (360*Math.random() - 180), 1));
-	  insert(new Action(Action.GUN_RIGHT, (360*Math.random() - 180), 1));
-	  double dist = Math.min($battle.getFieldWidth() * Math.random(), $battle.getFieldHeight()) * Math.random();
-	  insert(new Action(Action.AHEAD, dist, 1));
-	  System.out.println("Random movement initialised");
-end
-
+// ========== VICTIM SET & UPDATE RULES ==========
 
 // When no victim is set, and a robot is scanned, set him as victim and begin to follow
-rule "Without victim -> set the first detected"
+rule "Detected 1st victim -> create it"
+	salience 90
 	when
 		not (exists Victim())
-		$scannedVictim: ScannedRobotEvent()
-		$status: RobotState()
-		$enemyStatus: AdvancedEnemyState()
+		$scanned: ScannedRobotEvent()
 	then
 	    Victim victim = new Victim();
-		victim.setName($enemyStatus.getName());
-		victim.setX($enemyStatus.getX());                                            
-		victim.setY($enemyStatus.getY());
-		victim.setDistance($enemyStatus.getDistance());
-		victim.setBearing($enemyStatus.getBearing());
-	    victim.setHeading($enemyStatus.getHeading());
-	    victim.setVelocity($enemyStatus.getVelocity());
-	    victim.setEnergy($enemyStatus.getEnergy());
+		victim.setName($scanned.getName());
+		victim.setDistance($scanned.getDistance());
+		victim.setBearing($scanned.getBearing());
+	    victim.setHeading($scanned.getHeading());
+	    victim.setVelocity($scanned.getVelocity());
+	    victim.setEnergy($scanned.getEnergy());
 		insert(victim);
-  		System.out.println("Random movement initialised");
+  		System.out.println("Victim created");
 end
 
 
-
-
-// Detected victim : actualise its position and get close to it pointing gun and radar on it
-rule "Detected victim -> follow it with gun and radar pointed"
-   when
-      $victimData : Victim ($victimName: name)
-      $status : RobotState()
-      $scannedVictim: ScannedRobotEvent(name == $victimName)
-   then
-      double absoluteAngle = Helper.absoluteAngle($status.getHeading(), $scannedVictim.getBearing());
-      $victimData.setX(Helper.calculateX($status.getX(), absoluteAngle, $scannedVictim.getDistance()));                                            
-      $victimData.setY(Helper.calculateY($status.getY(), absoluteAngle, $scannedVictim.getDistance()));
-      $victimData.setDistance($scannedVictim.getDistance());
-      
-      insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
-      double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
-      insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
-      double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
-      insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
-      insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));
-end
-
-// Scanned event : turn radar oscillating on the victim
-rule "Scannedvictim : oscillate radar on it"
-	when 
-		$victimData: Victim($victimName: name)
-		$scanevent: ScannedRobotEvent(name == $victimName)
-		$status: Status()
-	then
-		$status.setScanDirection(-1 * $status.getScanDirection());
-		insert(new Action(Action.RADAR_RIGHT, 360 * $status.getScanDirection(), 1));
-end
-
-// Victim detected
-// If relative gun angle equals the relative victim angle, with a 2 grad marge
-// Shoot with max power
-// (anterior rule will be overwritten)
-rule "Victim in front of gun -> shoot"
-   when
-      $status : RobotState()
-      Victim ($victimName: name)
-      // Victim detected and pointed by gun (+- 2grad)
-      ScannedRobotEvent(name == $victimName, $victimRelativeAngle: bearing)                       
-      eval (Math.abs($victimRelativeAngle - Helper.relativeAngle($status.getHeading(), $status.getGunHeading())) <= 2)   
-   then
-      insert(new Action(Action.SHOOT, Math.min(Rules.MAX_BULLET_POWER, 0.10*$status.getEnergy()), 1));
-      System.out.println("Victim "+$victimName+" pointed => SHOOT");
+// Detected victim : update its informations
+rule "Detected victim -> update it"
+	salience 89
+   	when
+   		exists Victim()
+		$victim : Victim()
+      	$scanned: ScannedRobotEvent()
+		eval($victim.getDistance() > $scanned.getDistance());
+   	then
+		$victim.setName($scanned.getName());
+		$victim.setDistance($scanned.getDistance());
+		$victim.setBearing($scanned.getBearing());
+	    $victim.setHeading($scanned.getHeading());
+	    $victim.setVelocity($scanned.getVelocity());
+	    $victim.setEnergy($scanned.getEnergy());
+	    System.out.println("Victim updated");    
+	    System.out.println($scanned.getName());	    
 end
 
 
 // Eliminate current Victim() Fact when killed
 rule "Victim's death"
-when
-   $victim: Victim ($victimName: name)
-   RobotDeathEvent( name == $victimName )
-then 
-   retract($victim);
-   System.out.println("Tchau");
+	salience 88
+	when
+	   	$victim: Victim ($victimName: name)
+	   	RobotDeathEvent( name == $victimName )
+	then 
+	   	retract($victim);
+	   	System.out.println("VICTIM DESTROYED MOTHERF***ER");
 end
 
 
-// When a wall is touched, reboot to the opposed angle
-rule "Wall touched"
-when
-   HitWallEvent($relativeAngle: bearing)
-then
-   insert(new Action(Action.TANK_RIGHT, (- $relativeAngle), 5));
-   insert(new Action(Action.AHEAD, 100, 5));
+// ========== RADAR RULES ==========
+
+// When there's no robot detected, force a complete turn of radar
+rule "No detected robot -> radar complete turn"
+	salience 80
+	when
+		not (exists ScannedRobotEvent())
+	then
+		insert (new Action(Action.RADAR_RIGHT, 360, 1));
+		System.out.println("Radar complete turn initialized");
 end
 
 
-// When touching a victim, go back
-rule "Victim touched"
-when
-   HitRobotEvent($name: name, $relativeAngle: bearing)
-   Victim(name == $name)
-then
-   insert(new Action(Action.BACK, 100, 5));
+// Scanned event : turn radar oscillating on the victim
+rule "Scanned victim : oscillate radar on it"
+	when 
+		exists Victim()
+		exists ScannedRobotEvent()
+		$event : ScannedRobotEvent($same : name)
+		$victim : Victim($name : name)
+		eval($name == $same)
+		$status : Status()
+	then
+		$status.setScanDirection(-1 * $status.getScanDirection());
+		insert(new Action(Action.RADAR_RIGHT, 360 * $status.getScanDirection(), 1));
+	    System.out.println("OSCILLATION on :");
+	    System.out.println($name);  
 end
 
-
-// When touching an enemy robot, which isn't the victim, reboot in the opposed angle
-rule "Not victim robot touched"
-when
-   HitRobotEvent($name: name, $relativeAngle: bearing)
-   (or (not (exists Victim()))
-       (Victim(name != $name)))
-then
-   insert(new Action(Action.TANK_RIGHT, (- $relativeAngle*1.50), 5));
-   insert(new Action(Action.AHEAD, 100, 5));
-end
 

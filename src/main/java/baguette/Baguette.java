@@ -41,19 +41,16 @@ public class Baguette extends AdvancedRobot {
     private StatefulKnowledgeSession ksession;
     
     private Vector<FactHandle> currentReferencedFacts = new Vector<FactHandle>();
-    private AdvancedEnemyState enemyState = new AdvancedEnemyState();
-    private int scanDirection;
     		
     public Baguette(){
-    	// Nothing in constructor
     }
     
-
     public void run() {
     	DEBUG.enableDebugMode(System.getProperty("robot.debug", "true").equals("true"));
 
     	// Creates a knowledge base
     	createKnowledgeBase();
+    	DEBUG.message("KBase created");
     	
         // COLORS
         setBodyColor(Color.blue);
@@ -67,30 +64,28 @@ public class Baguette extends AdvancedRobot {
         setAdjustRadarForGunTurn(true);
         setAdjustRadarForRobotTurn(true);
 
-        // ENEMY RESET
-        enemyState.reset();
-
         while (true) {
         	DEBUG.message("TURN BEGINS");
             loadRobotState();
             loadBattleState();
-            loadEnemyState();
 
             // Fire rules
             DEBUG.message("Facts in active memory");
-            DEBUG.printFacts(ksession);           
+            DEBUG.printFacts(ksession); 
+            DEBUG.message("firing rules");
             ksession.fireAllRules();
-            cleanAnteriorFacts(); // just clears RobotState and BattleState after fire the rules
-            
+            cleanAnteriorFacts();
+
             // Get Actions
             Vector<Action> actions = loadActions();
             DEBUG.message("Resulting Actions");
             DEBUG.printActions(actions);
 
             // Execute Actions
+            DEBUG.message("firing actions");
             executeActions(actions);
         	DEBUG.message("TURN ENDS\n");
-            execute();  // Informs the robocode that the turn ended (blocking call)
+            execute();  
 
         }
 
@@ -119,11 +114,13 @@ public class Baguette extends AdvancedRobot {
 
 
     private void loadRobotState() {
+    	DEBUG.message("load robot state");
     	RobotState robotState = new RobotState(this);
     	currentReferencedFacts.add(ksession.insert(robotState));
     }
 
     private void loadBattleState() {
+    	DEBUG.message("load battle state");
         BattleState battleState =
                 new BattleState(
                 		getBattleFieldWidth(), 
@@ -136,11 +133,8 @@ public class Baguette extends AdvancedRobot {
         currentReferencedFacts.add(ksession.insert(battleState));
     }
     
-    private void loadEnemyState() {
-    	currentReferencedFacts.add(ksession.insert(this.enemyState));
-    }
-
     private void cleanAnteriorFacts() {
+    	DEBUG.message("clean anterior facts");
         for (FactHandle referencedFact : this.currentReferencedFacts) {
             ksession.retract(referencedFact);
         }
@@ -148,6 +142,7 @@ public class Baguette extends AdvancedRobot {
     }
 
     private Vector<Action> loadActions() {
+    	DEBUG.message("load actions");
         Action action;
         Vector<Action> actionsList = new Vector<Action>();
 
@@ -162,6 +157,7 @@ public class Baguette extends AdvancedRobot {
     }
 
     private void executeActions(Vector<Action> actions) {
+    	DEBUG.message("execute actions");
         for (Action action : actions) {
             action.initExecution();
         }
@@ -169,57 +165,42 @@ public class Baguette extends AdvancedRobot {
 
     // Insert in memory the different happening events
     public void onBulletHit(BulletHitEvent event) {
+    	DEBUG.message("received onbullethit");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onBulletHitBullet(BulletHitBulletEvent event) {
+    	DEBUG.message("received on bullet hit another bullet");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onBulletMissed(BulletMissedEvent event) {
+    	DEBUG.message("received bullet miss");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onHitByBullet(HitByBulletEvent event) {
+    	DEBUG.message("received hit by bullet");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onHitRobot(HitRobotEvent event) {
+    	DEBUG.message("received on hit robot");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onHitWall(HitWallEvent event) {
+    	DEBUG.message("received on hit wall");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onRobotDeath(RobotDeathEvent event) {
-    	 // ENEMY RESET ON DEATH
-    	if (event.getName().equals(enemyState.getName())) {
-    		enemyState.reset();
-    	}
+    	DEBUG.message("received on robot death");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onScannedRobot(ScannedRobotEvent event) {
-    	// KEEP VISION ON ENEMY : in rules
-    	// Optional : radar oscillating GOGOGOGO implement
-
-    	// ENEMY UPDATE 
-    	if (
-	    	// we have no enemy, or...
-	    	enemyState.none() ||
-	    	// the one we just spotted is closer, or...
-	    	event.getDistance() < enemyState.getDistance() ||
-	    	// we found the one we've been tracking
-	    	event.getName().equals(enemyState.getName())
-    	) {
-	    	// track him
-	    	enemyState.update(event);
-    	}
-    	
-    	// FOLLOW THE ENEMY : in rules
-    	
-    	// SHOOT THE ENEMY : in rules
+    	DEBUG.message("received on scanned robot");
     	currentReferencedFacts.add(ksession.insert(event));
     }
 }
