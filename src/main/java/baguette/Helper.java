@@ -54,7 +54,7 @@ public class Helper {
     }  
     
     public static double firePower(double distance, double energy){
-    	double power = Math.min(400/distance, 0,1*energy);
+    	double power = Math.min(400/distance, 0.1*energy);
     	return power;
     }
 }
