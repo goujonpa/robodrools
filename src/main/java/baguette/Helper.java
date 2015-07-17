@@ -1,4 +1,5 @@
 package baguette;
+import java.awt.geom.Point2D;
 
 public class Helper {
 
@@ -53,4 +54,66 @@ public class Helper {
         return Math.sqrt(offsetX*offsetX + offsetY*offsetY);
     }  
     
+    // normalizes a bearing to between +180 and -180
+    public static double normalizeBearing(double angle) {
+    	while (angle >  180) angle -= 360;
+    	while (angle < -180) angle += 360;
+    	return angle;
+    }
+    
+    // computes the absolute bearing between two points
+    public static double absoluteBearing(double x1, double y1, double x2, double y2) {
+    	double xo = x2-x1;
+    	double yo = y2-y1;
+    	double hyp = Point2D.distance(x1, y1, x2, y2);
+    	double arcSin = Math.toDegrees(Math.asin(xo / hyp));
+    	double bearing = 0;
+
+    	if (xo > 0 && yo > 0) { // both pos: lower-Left
+    		bearing = arcSin;
+    	} else if (xo < 0 && yo > 0) { // x neg, y pos: lower-right
+    		bearing = 360 + arcSin; // arcsin is negative here, actuall 360 - ang
+    	} else if (xo > 0 && yo < 0) { // x pos, y neg: upper-left
+    		bearing = 180 - arcSin;
+    	} else if (xo < 0 && yo < 0) { // both neg: upper-right
+    		bearing = 180 - arcSin; // arcsin is negative here, actually 180 + ang
+    	}
+
+    	return bearing;
+    }    
+    
+    // Calculates the firePower in function of the enemy distance
+    public static double firePower(double enemyDistance, double remainingEnergy) {
+    	return (Math.min(500 / enemyDistance, 0.1 * remainingEnergy));
+    }
+    
+    // Calculates the bulletSpeed in function of the firePower
+    public static double bulletSpeed(double firePower){
+    	return (20 - firePower * 3);
+    }
+    
+    // time calculation (mainly for predictive aiming)
+    // distance = rate * time, solved for time
+    public static long time(double enemyDistance, double bulletSpeed) {
+    	return (long)(enemyDistance / bulletSpeed);
+    }
+    
+    // get the enemy's X
+    public static double enemyX(double robotX, double robotHeading, double enemyBearing, double distance){
+    	double absBearingDeg = robotHeading + enemyBearing;
+    	if (absBearingDeg < 0) absBearingDeg += 360;
+    	return (robotX + Math.sin(Math.toRadians(absBearingDeg)) * distance);
+    	
+    }
+    
+    // get the enemy's Y
+    public static double enemyY(double robotY, double robotHeading, double enemyBearing, double distance){
+    	double absBearingDeg = robotHeading + enemyBearing;
+    	if (absBearingDeg < 0) absBearingDeg += 360;
+    	return (robotY + Math.sin(Math.toRadians(absBearingDeg)) * distance);
+    	
+    }
+
 }
+
+

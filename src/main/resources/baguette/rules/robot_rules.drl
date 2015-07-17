@@ -35,8 +35,6 @@ declare Status
 	others: int
 	x: double
 	y: double
-	nextX: double
-	nextY: double
 	distanceRemaining: double
 	gunHeading: double
 	gunHeat: double
@@ -189,11 +187,11 @@ rule "Victim's death"
 end
 
 
-// ========== RADAR RULES ==========
+// ========== RADAR TURNING RULES ==========
 
 // When there's no robot detected, force a complete turn of radar
 rule "No detected robot -> radar complete turn"
-	salience 80
+	salience 79
 	when
 		not (exists ScannedRobotEvent())
 	then
@@ -204,6 +202,7 @@ end
 
 // Scanned event : turn radar oscillating on the victim
 rule "Scanned victim : oscillate radar on it"
+	salience 80
 	when 
 		exists Victim()
 		exists ScannedRobotEvent()
@@ -218,5 +217,25 @@ rule "Scanned victim : oscillate radar on it"
 	    System.out.println($name);  
 end
 
+// ========== GUN TURNING RULES ==========
+
+// When a victim exists, update her x and y properties
+rule "Victim exists ===> update her position"
+	salience 87
+	when 
+		exists Victim()
+		$victim : Victim($distance : distance, $bearing : bearing)
+		exists Status()
+		$status : Status($x : x, $y : y, $heading : heading)
+	then
+		double enemyX = Helper.enemyX($x, $heading, $bearing, $distance);
+		double enemyY = Helper.enemyY($y, $heading, $bearing, $distance);
+		$victim.setX(enemyX);
+		$victim.setY(enemyY);
+end
+
+// When a victim exists, update her futureX and futureY properties
+
+	
 
 
