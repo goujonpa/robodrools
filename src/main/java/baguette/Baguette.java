@@ -41,7 +41,7 @@ public class Baguette extends AdvancedRobot {
     private StatefulKnowledgeSession ksession;
     
     private Vector<FactHandle> currentReferencedFacts = new Vector<FactHandle>();
-    private EnemyState enemy = new EnemyState();
+    private AdvancedEnemyState enemyState = new AdvancedEnemyState();
     		
     public Baguette(){
     	// Nothing in constructor
@@ -67,12 +67,13 @@ public class Baguette extends AdvancedRobot {
         setAdjustRadarForRobotTurn(true);
 
         // ENEMY RESET
-        enemy.reset();
+        enemyState.reset();
 
         while (true) {
         	DEBUG.message("TURN BEGINS");
             loadRobotState();
             loadBattleState();
+            loadEnemyState();
 
             // Fire rules
             DEBUG.message("Facts in active memory");
@@ -133,6 +134,10 @@ public class Baguette extends AdvancedRobot {
         );
         currentReferencedFacts.add(ksession.insert(battleState));
     }
+    
+    private void loadEnemyState() {
+    	currentReferencedFacts.add(ksession.insert(this.enemyState));
+    }
 
     private void cleanAnteriorFacts() {
         for (FactHandle referencedFact : this.currentReferencedFacts) {
@@ -188,8 +193,8 @@ public class Baguette extends AdvancedRobot {
 
     public void onRobotDeath(RobotDeathEvent event) {
     	 // ENEMY RESET ON DEATH
-    	if (event.getName().equals(enemy.getName())) {
-    		enemy.reset();
+    	if (event.getName().equals(enemyState.getName())) {
+    		enemyState.reset();
     	}
     	currentReferencedFacts.add(ksession.insert(event));
     }
@@ -198,17 +203,17 @@ public class Baguette extends AdvancedRobot {
     	// KEEP VISION ON ENEMY : in rules
     	// Optional : radar oscillating GOGOGOGO implement
 
-    	// ENEMY UPDATE
+    	// ENEMY UPDATE 
     	if (
 	    	// we have no enemy, or...
-	    	enemy.none() ||
+	    	enemyState.none() ||
 	    	// the one we just spotted is closer, or...
-	    	event.getDistance() < enemy.getDistance() ||
+	    	event.getDistance() < enemyState.getDistance() ||
 	    	// we found the one we've been tracking
-	    	event.getName().equals(enemy.getName())
+	    	event.getName().equals(enemyState.getName())
     	) {
 	    	// track him
-	    	enemy.update(event);
+	    	enemyState.update(event);
     	}
     	
     	// FOLLOW THE ENEMY : in rules
