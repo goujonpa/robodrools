@@ -34,6 +34,18 @@ declare Status
 	y: double
 	nextX: double
 	nextY: double
+	distanceRemaining: double
+	gunHeading: double
+	gunHeat: double
+	gunTurnRemaining: double
+	heading: double
+	numRounds: int
+	radarHeading: double
+	radarTurnRemaining: double
+	roundNum: int
+	time: long
+	turnRemaining: double
+	velocity: double
 end
 
 
