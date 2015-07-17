@@ -49,6 +49,7 @@ declare Status
 	time: long
 	turnRemaining: double
 	velocity: double
+	scanDirection: int
 end
 
 
@@ -88,6 +89,7 @@ then
 	status.setTime($status.getTime());
 	status.setTurnRemaining($status.getTurnRemaining());
 	status.setVelocity($status.getVelocity());
+	status.setScanDirection(1);
     insert(status);
     System.out.println("Status updated"); 
 end
@@ -130,37 +132,6 @@ then
 end
 
 
-// When no victim is set, and a robot is scanned, set him as victim and begin to follow
-rule "Without victim -> set the first detected"
-when
-	not (exists Victim())
-	$scannedVictim: ScannedRobotEvent()
-	$status: RobotState()
-	$enemyStatus: AdvancedEnemyState()
-then
-    Victim victim = new Victim();
-	victim.setName($enemyStatus.getName());
-	victim.setX($enemyStatus.getX());                                            
-	victim.setY($enemyStatus.getY());
-	victim.setDistance($enemyStatus.getDistance());
-	victim.setBearing($enemyStatus.getBearing());
-    victim.setHeading($enemyStatus.getHeading());
-    victim.setVelocity($enemyStatus.getVelocity());
-    victim.setFutureX($enemyStatus.getFutureX());
-    victim.setFutureY($enemyStatus.getFutureY());
-    victim.setEnergy($enemyStatus.getEnergy());
-	insert(victim);
-	  
-	insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
-	double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
-	insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
-	double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
-	insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
-	insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));    
-	System.out.println("Rule 6"); 
-end
-
-
 // when stopped, and no victim detected, turns the radar and makes random movement
 rule "stopped without victim -> random move and turn radar"
 when
@@ -171,10 +142,41 @@ then
   insert(new Action(Action.RADAR_RIGHT, 360, 1));
   insert(new Action(Action.TANK_RIGHT, (360*Math.random() - 180), 1));
   insert(new Action(Action.GUN_RIGHT, (360*Math.random() - 180), 1));
-  double dist = Math.min($battle.getFieldWidth(), $battle.getFieldHeight())*Math.random();
+  double dist = Math.min($battle.getFieldWidth() * Math.random(), $battle.getFieldHeight()) * Math.random();
   insert(new Action(Action.AHEAD, dist, 1));
   System.out.println("Rule 3");
 end
+
+
+// When no victim is set, and a robot is scanned, set him as victim and begin to follow
+rule "Without victim -> set the first detected"
+	when
+		not (exists Victim())
+		$scannedVictim: ScannedRobotEvent()
+		$status: RobotState()
+		$enemyStatus: AdvancedEnemyState()
+	then
+	    Victim victim = new Victim();
+		victim.setName($enemyStatus.getName());
+		victim.setX($enemyStatus.getX());                                            
+		victim.setY($enemyStatus.getY());
+		victim.setDistance($enemyStatus.getDistance());
+		victim.setBearing($enemyStatus.getBearing());
+	    victim.setHeading($enemyStatus.getHeading());
+	    victim.setVelocity($enemyStatus.getVelocity());
+	    victim.setEnergy($enemyStatus.getEnergy());
+		insert(victim);
+		  
+		insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
+		double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
+		insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
+		double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
+		insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
+		insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));    
+		System.out.println("Rule 6"); 
+end
+
+
 
 
 // Detected victim : actualise its position and get close to it pointing gun and radar on it
@@ -197,7 +199,16 @@ rule "Detected victim -> follow it with gun and radar pointed"
       insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));
 end
 
-
+// Scanned event : turn radar oscillating on the victim
+rule "Scannedvictim : oscillate radar on it"
+	when 
+		$victimData: Victim($victimName: name)
+		$scanevent: ScannedRobotEvent(name == $victimName)
+		$status: Status()
+	then
+		$status.setScanDirection(-1 * $status.getScanDirection());
+		insert(new Action(Action.RADAR_RIGHT, 360 * $status.getScanDirection(), 1));
+end
 
 // Victim detected
 // If relative gun angle equals the relative victim angle, with a 2 grad marge

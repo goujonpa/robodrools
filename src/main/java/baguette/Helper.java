@@ -53,8 +53,4 @@ public class Helper {
         return Math.sqrt(offsetX*offsetX + offsetY*offsetY);
     }  
     
-    public static double firePower(double distance, double energy){
-    	double power = Math.min(400/distance, 0.1*energy);
-    	return power;
-    }
 }
