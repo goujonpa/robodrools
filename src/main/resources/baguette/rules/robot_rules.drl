@@ -22,6 +22,9 @@ declare Victim
    x: double
    y: double
    distance: double
+   bearing: double
+   heading: double
+   velocity: double
    nextX: double
    nextY: double
    energy: double
@@ -73,18 +76,18 @@ then
     status.setOthers($status.getOthers());
     status.setX($status.getX());
     status.setY($status.getY());
-   	status.setDistanceRemaining: ($status.getDistanceRemaining());
-	status.setGunHeading: ($status.getGunHeading());
-	status.setGunHeat: ($status.getGunHeat());
-	status.setGunTurnRemaining: ($status.getGunTurnRemaining());
-	status.setHeading: ($status.getHeading());
-	status.setNumRounds: ($status.getNumRounds());
-	status.setRadarHeading: ($status.getRadarHeading());
-	status.setRadarTurnRemaining: ($status.getRadarTurnRemaining());
-	status.setRoundNum: ($status.getRoundNum());
-	status.setTime: ($status.getTime());
-	status.setTurnRemaining: ($status.getTurnRemaining());
-	status.setVelocity: ($status.getVelocity());
+   	status.setDistanceRemaining($status.getDistanceRemaining());
+	status.setGunHeading($status.getGunHeading());
+	status.setGunHeat($status.getGunHeat());
+	status.setGunTurnRemaining($status.getGunTurnRemaining());
+	status.setHeading($status.getHeading());
+	status.setNumRounds($status.getNumRounds());
+	status.setRadarHeading($status.getRadarHeading());
+	status.setRadarTurnRemaining($status.getRadarTurnRemaining());
+	status.setRoundNum($status.getRoundNum());
+	status.setTime($status.getTime());
+	status.setTurnRemaining($status.getTurnRemaining());
+	status.setVelocity($status.getVelocity());
     insert(status);
     System.out.println("Status updated"); 
 end
@@ -101,18 +104,18 @@ then
     $prevStatus.setOthers($newStatus.getOthers());
     $prevStatus.setX($newStatus.getX());
     $prevStatus.setY($newStatus.getY());
-   	$prevStatus.setDistanceRemaining: ($newStatus.getDistanceRemaining());
-	$prevStatus.setGunHeading: ($newStatus.getGunHeading());
-	$prevStatus.setGunHeat: ($newStatus.getGunHeat());
-	$prevStatus.setGunTurnRemaining: ($newStatus.getGunTurnRemaining());
-	$prevStatus.setHeading: ($newStatus.getHeading());
-	$prevStatus.setNumRounds: ($newStatus.getNumRounds());
-	$prevStatus.setRadarHeading: ($newStatus.getRadarHeading());
-	$prevStatus.setRadarTurnRemaining: ($newStatus.getRadarTurnRemaining());
-	$prevStatus.setRoundNum: ($newStatus.getRoundNum());
-	$prevStatus.setTime: ($newStatus.getTime());
-	$prevStatus.setTurnRemaining: ($newStatus.getTurnRemaining());
-	$prevStatus.setVelocity: ($newStatus.getVelocity());
+   	$prevStatus.setDistanceRemaining($newStatus.getDistanceRemaining());
+	$prevStatus.setGunHeading($newStatus.getGunHeading());
+	$prevStatus.setGunHeat($newStatus.getGunHeat());
+	$prevStatus.setGunTurnRemaining($newStatus.getGunTurnRemaining());
+	$prevStatus.setHeading($newStatus.getHeading());
+	$prevStatus.setNumRounds($newStatus.getNumRounds());
+	$prevStatus.setRadarHeading($newStatus.getRadarHeading());
+	$prevStatus.setRadarTurnRemaining($newStatus.getRadarTurnRemaining());
+	$prevStatus.setRoundNum($newStatus.getRoundNum());
+	$prevStatus.setTime($newStatus.getTime());
+	$prevStatus.setTurnRemaining($newStatus.getTurnRemaining());
+	$prevStatus.setVelocity($newStatus.getVelocity());
     System.out.println("Status updated"); 
 end		
 
