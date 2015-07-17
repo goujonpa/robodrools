@@ -25,8 +25,8 @@ declare Victim
    bearing: double
    heading: double
    velocity: double
-   nextX: double
-   nextY: double
+   futureX: double
+   futureY: double
    energy: double
 end
 
@@ -123,10 +123,41 @@ end
 // When there's no robot detected, force a complete turn of radar
 rule "No detected robot -> radar complete turn"
 when
-	not (exists ScannedRobotEvent())
+	not (exists Victim())
 then
 	insert (new Action(Action.RADAR_RIGHT, 360, 1));
 	System.out.println("Rule 2");
+end
+
+
+// When no victim is set, and a robot is scanned, set him as victim and begin to follow
+rule "Without victim -> set the first detected"
+when
+	not (exists Victim())
+	$scannedVictim: ScannedRobotEvent()
+	$status: RobotState()
+	$enemyStatus: AdvancedEnemyState()
+then
+    Victim victim = new Victim();
+	victim.setName($enemyStatus.getName());
+	victim.setX($enemyStatus.getX());                                            
+	victim.setY($enemyStatus.getY());
+	victim.setDistance($enemyStatus.getDistance());
+	victim.setBearing($enemyStatus.getBearing());
+    victim.setHeading($enemyStatus.getHeading());
+    victim.setVelocity($enemyStatus.getVelocity());
+    victim.setFutureX($enemyStatus.getFutureX());
+    victim.setFutureY($enemyStatus.getFutureY());
+    victim.setEnergy($enemyStatus.getEnergy());
+	insert(victim);
+	  
+	insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
+	double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
+	insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
+	double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
+	insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
+	insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));    
+	System.out.println("Rule 6"); 
 end
 
 
@@ -182,32 +213,6 @@ rule "Victim in front of gun -> shoot"
    then
       insert(new Action(Action.SHOOT, Math.min(Rules.MAX_BULLET_POWER, 0.10*$status.getEnergy()), 1));
       System.out.println("Victim "+$victimName+" pointed => SHOOT");
-end
-
-
-
-// When no victim is detected, and a robot is scanned, set him as victim and begin to follow
-rule "Without victim -> set the first detected"
-when
-	not (exists Victim())
-	$scannedVictim: ScannedRobotEvent()
-	$status: RobotState()
-then
-    Victim victim = new Victim();
-      double absoluteAngle = Helper.absoluteAngle($status.getHeading(), $scannedVictim.getBearing());
-      victim.setName($scannedVictim.getName());
-      victim.setX(Helper.calculateX($status.getX(), absoluteAngle, $scannedVictim.getDistance()));                                            
-      victim.setY(Helper.calculateY($status.getY(), absoluteAngle, $scannedVictim.getDistance()));
-      victim.setDistance($scannedVictim.getDistance());
-      insert(victim);
-      
-      insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
-      double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
-      insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
-      double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
-      insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
-      insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));    
-      System.out.println("Rule 6"); 
 end
 
 

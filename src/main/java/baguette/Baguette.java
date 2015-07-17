@@ -42,6 +42,7 @@ public class Baguette extends AdvancedRobot {
     
     private Vector<FactHandle> currentReferencedFacts = new Vector<FactHandle>();
     private AdvancedEnemyState enemyState = new AdvancedEnemyState();
+    private int scanDirection;
     		
     public Baguette(){
     	// Nothing in constructor
