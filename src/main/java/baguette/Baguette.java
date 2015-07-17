@@ -40,10 +40,9 @@ public class Baguette extends AdvancedRobot {
     // KSESSION : class used to dialog with the rules engine
     private StatefulKnowledgeSession ksession;
     
-    
     private Vector<FactHandle> currentReferencedFacts = new Vector<FactHandle>();
-
-    
+    private EnemyState enemy = new EnemyState();
+    		
     public Baguette(){
     	// Nothing in constructor
     }
@@ -67,6 +66,8 @@ public class Baguette extends AdvancedRobot {
         setAdjustRadarForGunTurn(true);
         setAdjustRadarForRobotTurn(true);
 
+        // ENEMY RESET
+        enemy.reset();
 
         while (true) {
         	DEBUG.message("TURN BEGINS");
@@ -186,10 +187,33 @@ public class Baguette extends AdvancedRobot {
     }
 
     public void onRobotDeath(RobotDeathEvent event) {
+    	 // ENEMY RESET ON DEATH
+    	if (event.getName().equals(enemy.getName())) {
+    		enemy.reset();
+    	}
     	currentReferencedFacts.add(ksession.insert(event));
     }
 
     public void onScannedRobot(ScannedRobotEvent event) {
+    	// KEEP VISION ON ENEMY : in rules
+    	// Optional : radar oscillating GOGOGOGO implement
+
+    	// ENEMY UPDATE
+    	if (
+	    	// we have no enemy, or...
+	    	enemy.none() ||
+	    	// the one we just spotted is closer, or...
+	    	event.getDistance() < enemy.getDistance() ||
+	    	// we found the one we've been tracking
+	    	event.getName().equals(enemy.getName())
+    	) {
+	    	// track him
+	    	enemy.update(event);
+    	}
+    	
+    	// FOLLOW THE ENEMY : in rules
+    	
+    	// SHOOT THE ENEMY : in rules
     	currentReferencedFacts.add(ksession.insert(event));
     }
 }
