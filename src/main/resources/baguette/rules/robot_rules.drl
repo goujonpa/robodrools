@@ -56,95 +56,95 @@ end
 // Convenience Rule: Eliminate actions with the same type if lower priority
 // If that wasn't done, the robot would execute the last action inserted
 rule "Clean actions with same type"
-when
-	$action1: Action($type: type, $priority1: priority)
-	$action2: Action(type==$type, $priority2: priority)
-	eval ($priority1 > $priority2)
-then
-    retract($action2);     // Removes action with worst priority
-    System.out.println("Rule 1");
+	when
+		$action1: Action($type: type, $priority1: priority)
+		$action2: Action(type==$type, $priority2: priority)
+		eval ($priority1 > $priority2)
+	then
+	    retract($action2);     // Removes action with worst priority
+	    System.out.println("Cleaning <priority actions");
 end
 
 
 // when no internal status, create it
 rule "Without status -> create one"
-when 
-	not (exists Status())
-	$status: RobotState()
-then
-	Status status = new Status();
-	status.setEnergy($status.getEnergy());
-    status.setOthers($status.getOthers());
-    status.setX($status.getX());
-    status.setY($status.getY());
-   	status.setDistanceRemaining($status.getDistanceRemaining());
-	status.setGunHeading($status.getGunHeading());
-	status.setGunHeat($status.getGunHeat());
-	status.setGunTurnRemaining($status.getGunTurnRemaining());
-	status.setHeading($status.getHeading());
-	status.setNumRounds($status.getNumRounds());
-	status.setRadarHeading($status.getRadarHeading());
-	status.setRadarTurnRemaining($status.getRadarTurnRemaining());
-	status.setRoundNum($status.getRoundNum());
-	status.setTime($status.getTime());
-	status.setTurnRemaining($status.getTurnRemaining());
-	status.setVelocity($status.getVelocity());
-	status.setScanDirection(1);
-    insert(status);
-    System.out.println("Status updated"); 
+	when 
+		not (exists Status())
+		$status: RobotState()
+	then
+		Status status = new Status();
+		status.setEnergy($status.getEnergy());
+	    status.setOthers($status.getOthers());
+	    status.setX($status.getX());
+	    status.setY($status.getY());
+	   	status.setDistanceRemaining($status.getDistanceRemaining());
+		status.setGunHeading($status.getGunHeading());
+		status.setGunHeat($status.getGunHeat());
+		status.setGunTurnRemaining($status.getGunTurnRemaining());
+		status.setHeading($status.getHeading());
+		status.setNumRounds($status.getNumRounds());
+		status.setRadarHeading($status.getRadarHeading());
+		status.setRadarTurnRemaining($status.getRadarTurnRemaining());
+		status.setRoundNum($status.getRoundNum());
+		status.setTime($status.getTime());
+		status.setTurnRemaining($status.getTurnRemaining());
+		status.setVelocity($status.getVelocity());
+		status.setScanDirection(1);
+	    insert(status);
+	    System.out.println("Internal status created"); 
 end
     
 
 
 // when internal status, update it
 rule "With status -> update it"
-when
-	$prevStatus: Status()
-	$newStatus: RobotState()
-then
-	$prevStatus.setEnergy($newStatus.getEnergy());
-    $prevStatus.setOthers($newStatus.getOthers());
-    $prevStatus.setX($newStatus.getX());
-    $prevStatus.setY($newStatus.getY());
-   	$prevStatus.setDistanceRemaining($newStatus.getDistanceRemaining());
-	$prevStatus.setGunHeading($newStatus.getGunHeading());
-	$prevStatus.setGunHeat($newStatus.getGunHeat());
-	$prevStatus.setGunTurnRemaining($newStatus.getGunTurnRemaining());
-	$prevStatus.setHeading($newStatus.getHeading());
-	$prevStatus.setNumRounds($newStatus.getNumRounds());
-	$prevStatus.setRadarHeading($newStatus.getRadarHeading());
-	$prevStatus.setRadarTurnRemaining($newStatus.getRadarTurnRemaining());
-	$prevStatus.setRoundNum($newStatus.getRoundNum());
-	$prevStatus.setTime($newStatus.getTime());
-	$prevStatus.setTurnRemaining($newStatus.getTurnRemaining());
-	$prevStatus.setVelocity($newStatus.getVelocity());
-    System.out.println("Status updated"); 
+	when
+		$prevStatus: Status()
+		$newStatus: RobotState()
+	then
+		$prevStatus.setEnergy($newStatus.getEnergy());
+	    $prevStatus.setOthers($newStatus.getOthers());
+	    $prevStatus.setX($newStatus.getX());
+	    $prevStatus.setY($newStatus.getY());
+	   	$prevStatus.setDistanceRemaining($newStatus.getDistanceRemaining());
+		$prevStatus.setGunHeading($newStatus.getGunHeading());
+		$prevStatus.setGunHeat($newStatus.getGunHeat());
+		$prevStatus.setGunTurnRemaining($newStatus.getGunTurnRemaining());
+		$prevStatus.setHeading($newStatus.getHeading());
+		$prevStatus.setNumRounds($newStatus.getNumRounds());
+		$prevStatus.setRadarHeading($newStatus.getRadarHeading());
+		$prevStatus.setRadarTurnRemaining($newStatus.getRadarTurnRemaining());
+		$prevStatus.setRoundNum($newStatus.getRoundNum());
+		$prevStatus.setTime($newStatus.getTime());
+		$prevStatus.setTurnRemaining($newStatus.getTurnRemaining());
+		$prevStatus.setVelocity($newStatus.getVelocity());
+	    System.out.println("Internal status updated"); 
 end		
 
 
 // When there's no robot detected, force a complete turn of radar
 rule "No detected robot -> radar complete turn"
-when
-	not (exists Victim())
-then
-	insert (new Action(Action.RADAR_RIGHT, 360, 1));
-	System.out.println("Rule 2");
+	when
+		not (exists Victim())
+	then
+		insert (new Action(Action.RADAR_RIGHT, 360, 1));
+		System.out.println("Radar complete turn initialised");
 end
 
 
 // when stopped, and no victim detected, turns the radar and makes random movement
 rule "stopped without victim -> random move and turn radar"
-when
-  RobotState(distanceRemaining == 0)
-  not (exists Victim())
-  $battle: BattleState()
-then
-  insert(new Action(Action.RADAR_RIGHT, 360, 1));
-  insert(new Action(Action.TANK_RIGHT, (360*Math.random() - 180), 1));
-  insert(new Action(Action.GUN_RIGHT, (360*Math.random() - 180), 1));
-  double dist = Math.min($battle.getFieldWidth() * Math.random(), $battle.getFieldHeight()) * Math.random();
-  insert(new Action(Action.AHEAD, dist, 1));
-  System.out.println("Rule 3");
+	when
+	  RobotState(distanceRemaining == 0)
+	  not (exists Victim())
+	  $battle: BattleState()
+	then
+	  insert(new Action(Action.RADAR_RIGHT, 360, 1));
+	  insert(new Action(Action.TANK_RIGHT, (360*Math.random() - 180), 1));
+	  insert(new Action(Action.GUN_RIGHT, (360*Math.random() - 180), 1));
+	  double dist = Math.min($battle.getFieldWidth() * Math.random(), $battle.getFieldHeight()) * Math.random();
+	  insert(new Action(Action.AHEAD, dist, 1));
+	  System.out.println("Random movement initialised");
 end
 
 
@@ -166,14 +166,7 @@ rule "Without victim -> set the first detected"
 	    victim.setVelocity($enemyStatus.getVelocity());
 	    victim.setEnergy($enemyStatus.getEnergy());
 		insert(victim);
-		  
-		insert(new Action(Action.TANK_RIGHT, $scannedVictim.getBearing(), 1));
-		double gunRelativeAngle = Helper.relativeAngle($status.getHeading(), $status.getGunHeading());
-		insert(new Action(Action.GUN_RIGHT, ($scannedVictim.getBearing() - gunRelativeAngle), 1));
-		double radarRelativeAngle =  Helper.relativeAngle($status.getHeading(), $status.getRadarHeading());
-		insert(new Action(Action.RADAR_RIGHT, ($scannedVictim.getBearing() - radarRelativeAngle), 1));
-		insert(new Action(Action.AHEAD, ($scannedVictim.getDistance()-100), 1));    
-		System.out.println("Rule 6"); 
+  		System.out.println("Random movement initialised");
 end
 
 
