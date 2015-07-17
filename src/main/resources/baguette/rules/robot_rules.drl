@@ -135,13 +135,34 @@ rule "Detected 1st victim -> create it"
   		System.out.println("Victim created");
 end
 
-
-// Detected victim : update its informations
-rule "Detected victim -> update it"
+// Detected victim ===> update it
+rule "Detected victim ===> update info"
 	salience 89
+	when 
+		exists Victim()
+		$victim : Victim($name : name)
+		exists ScannedRobotEvent()
+		$scanned : ScannedRobotEvent($same : name)
+		eval($name == $same)
+	then
+		$victim.setName($scanned.getName());
+		$victim.setDistance($scanned.getDistance());
+		$victim.setBearing($scanned.getBearing());
+	    $victim.setHeading($scanned.getHeading());
+	    $victim.setVelocity($scanned.getVelocity());
+	    $victim.setEnergy($scanned.getEnergy());
+	    System.out.println("Updated victim informations :");    
+	    System.out.println($scanned.getName());	 
+end
+   
+
+// Detected closer robot ===> set as victim
+rule "Detected closer -> update the victim"
+	salience 88
    	when
    		exists Victim()
 		$victim : Victim()
+		exists ScannedRobotEvent()
       	$scanned: ScannedRobotEvent()
 		eval($victim.getDistance() > $scanned.getDistance());
    	then
@@ -151,7 +172,7 @@ rule "Detected victim -> update it"
 	    $victim.setHeading($scanned.getHeading());
 	    $victim.setVelocity($scanned.getVelocity());
 	    $victim.setEnergy($scanned.getEnergy());
-	    System.out.println("Victim updated");    
+	    System.out.println("New Victim (closer)");    
 	    System.out.println($scanned.getName());	    
 end
 
@@ -196,5 +217,6 @@ rule "Scanned victim : oscillate radar on it"
 	    System.out.println("OSCILLATION on :");
 	    System.out.println($name);  
 end
+
 
 
