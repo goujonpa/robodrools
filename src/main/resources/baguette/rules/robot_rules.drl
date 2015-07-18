@@ -4,8 +4,6 @@ import baguette.*;
 import robocode.*;
 import robocode.ScannedRobotEvent;
 
-
-// This definition has to be included everytime, to allow the robot consulting the actions
 query "consult_actions"
   action: Action()
 end
@@ -59,7 +57,7 @@ rule "WHEN old action THEN clean it"
 	when
 		$action: Action($time: time)
 		$state : RobotState()
-		eval($time < $state.getTime)
+		eval($time < $state.getTime())
 	then
 	    retract($action);
 	    System.out.println("Rule from last turn cleaned.");
@@ -71,6 +69,7 @@ end
 rule "WHEN no status THEN create one"
 	salience 100
 	when 
+		not(exists Status())
 		$status: RobotState()
 	then
 		Status status = new Status();
@@ -221,11 +220,11 @@ end
 rule "WHEN scanned victim THEN oscillate radar on it"
 	salience 79
 	when 
-		$event : ScannedRobotEvent($same : name)
-		$victim : Victim($name : name)
-		eval($name == $same)
+		$scanned : ScannedRobotEvent()
+		$victim : Victim()
 		$status : Status()
 		$state : RobotState()
+		eval($victim.getName() == $scanned.getName())
 	then
 		$status.setScanDirection(-1 * $status.getScanDirection());
 		insert(new Action(Action.RADAR_RIGHT, 360 * $status.getScanDirection(), 1, $state.getTime()));
@@ -233,7 +232,7 @@ rule "WHEN scanned victim THEN oscillate radar on it"
 end
 
 
-// ========== SHOOTING RULES ==========
+// ========== AIMING RULES ==========
 
 rule "WHEN exists victim THEN set gun to predicted position"
 	salience 69
@@ -249,17 +248,20 @@ rule "WHEN exists victim THEN set gun to predicted position"
 		insert(new Action(Action.GUN_RIGHT, finalAngle, 1, $state.getTime()));
 	    System.out.println("Victim's next position predicted, aiming.....");  
 end
+
+// ========== SHOOTING RULES ==========
 		
 rule "WHEN gun is cool and on target THEN FIRE"
 	salience 68
 	when 
 		$victim : Victim()
-		$status : Status($gunHeat : gunHeat, $gunTurnRemaining : gunTurnRemaining)
-		eval($gunHeat == 0.0)
-		eval($gunTurnRemaining < 10)
+		$status : Status()
 		$state : RobotState()
+		eval($state.getGunHeat() == 0.0)
+		eval($state.getGunTurnRemaining() < 10)
 	then 
 		insert(new Action(Action.SHOOT, $victim.getFirePower(), 1, $state.getTime()));
 	    System.out.println("AND ..... FIIIIIIRRREEEEEEE");  
 end
+
 

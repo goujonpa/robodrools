@@ -6,7 +6,7 @@ public class Action {
     private int        	type;
     private double     	parameter;
     private int        	priority;
-    private int 		time;
+    private long 		time;
 
     private AdvancedRobot robot;   // Reference to the bot who will execute the action
 
@@ -25,18 +25,18 @@ public class Action {
     public Action() {
     }
 
-    public Action(int type, double parameter, int priority, int time) {
+    public Action(int type, double parameter, int priority, long time) {
         this.type = type;
         this.parameter = parameter;
         this.priority = priority;
         this.time = time;
     }
     
-    public int getTime(){
+    public long getTime(){
     	return time;
     }
     
-    public void setTime(int time) {
+    public void setTime(long time) {
     	this.time = time;
     }
 
@@ -101,7 +101,7 @@ public class Action {
                 case Action.TANK_RIGHT: strType="Tank Right"; break;
                 case Action.TANK_LEFT: strType="Tank Left"; break;
             }
-	return "Action[type:"+strType+", parameter:"+parameter+", priority:"+priority+"]";
+	return "Action[type:"+strType+", parameter:"+parameter+", priority:"+priority+", Time:"+time+"]";
     }
 
 }
