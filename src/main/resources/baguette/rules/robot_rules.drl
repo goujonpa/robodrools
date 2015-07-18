@@ -254,14 +254,47 @@ end
 rule "WHEN gun is cool and on target THEN FIRE"
 	salience 68
 	when 
-		$victim : Victim()
-		$status : Status()
-		$state : RobotState()
+		$victim: Victim()
+		$status: Status()
+		$state: RobotState()
 		eval($state.getGunHeat() == 0.0)
 		eval($state.getGunTurnRemaining() < 10)
 	then 
 		insert(new Action(Action.SHOOT, $victim.getFirePower(), 1, $state.getTime()));
 	    System.out.println("AND ..... FIIIIIIRRREEEEEEE");  
 end
+
+// ========== MOVING RULES ==========
+
+rule "WHEN no victim THEN random moves" // random moves based on "crazy" source
+	salience 60
+	when 
+		not(exists Victim())
+		$state: RobotState()
+		$status: Status()
+	then
+		insert(new Action(Action.AHEAD, 1000, 1, $state.getTime()));
+		insert(new Action(Action.TANK_RIGHT, 90, 1, $state.getTime()));
+	    System.out.println("Random move initialized");
+end  
+
+rule "WHEN victim is set THEN stay close"
+	salience 59
+	when 
+		$victim: Victim()
+		$status: Status()
+		$state: RobotState()
+	then 
+		insert(new Action(Action.TANK_RIGHT, $victim.getBearing(), 1, $state.getTime()));
+		insert(new Action(Action.AHEAD, ($victim.getDistance() - 100), 1, $state.getTime()));
+	    System.out.println("Movements updated.");  
+end
+
+
+
+
+
+
+
 
 
