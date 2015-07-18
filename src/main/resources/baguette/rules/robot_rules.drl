@@ -66,18 +66,6 @@ rule "WHEN old action THEN clean it"
 	    System.out.println("Rule from last turn cleaned.");
 end
 
-// ========== TEST RULES ===========
-
-rule "WHEN scanned is teammate THEN display it"
-	salience 118
-	when
-		$scanned : ScannedRobotEvent()
-		$state : RobotState()
-		eval($state.isTeamMate($scanned.getName()))
-	then
-	    System.out.println("TEAMMATE !!");
-end
-
 
 // ========== STATUS RULES ==========
 
@@ -139,6 +127,8 @@ rule "WHEN 1st victim THEN create it"
 		not (exists Victim())
 		$scanned: ScannedRobotEvent()
 		$status : Status()
+		$state: RobotState()
+		eval(not($state.isTeamMate($scanned.getName())))
 	then
 	    Victim victim = new Victim();
 		victim.setName($scanned.getName());
@@ -165,10 +155,12 @@ end
 rule "WHEN new turn and detected old victim THEN update victim's informations"
 	salience 88
 	when 
-		$victim : Victim($name : name)
-		$scanned : ScannedRobotEvent($same : name)
-		eval($name == $same)
+		$victim : Victim()
+		$scanned : ScannedRobotEvent()
 		$status : Status()
+		$state : RobotState()
+		eval($victim.getName() == $scanned.getName())
+		eval(not($state.isTeamMate($scanned.getName())))
 	then
 		$victim.setName($scanned.getName());
 		$victim.setDistance($scanned.getDistance());
@@ -195,8 +187,10 @@ rule "WHEN detected closer victim than old one THEN update to new victim"
    	when
 		$victim : Victim()
       	$scanned: ScannedRobotEvent()
+      	$status : Status()
+      	$state : RobotState()
 		eval($victim.getDistance() > $scanned.getDistance())
-		$status : Status()
+		eval(not($state.isTeamMate($scanned.getName())))
    	then
 		$victim.setName($scanned.getName());
 		$victim.setDistance($scanned.getDistance());
