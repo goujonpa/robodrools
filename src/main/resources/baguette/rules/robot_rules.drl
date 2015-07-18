@@ -57,7 +57,7 @@ end
 // ========== STATUS RULES ==========
 
 // when no internal status, create it
-rule "Without status -> create one"
+rule "Without status : create one"
 	salience 100
 	when 
 		not (exists Status())
@@ -88,7 +88,7 @@ end
 
 
 // when internal status, update it
-rule "With status -> update it"
+rule "With status : update it"
 	salience 99
 	when
 		exists Status()
@@ -111,7 +111,7 @@ rule "With status -> update it"
 		$prevStatus.setTime($newStatus.getTime());
 		$prevStatus.setTurnRemaining($newStatus.getTurnRemaining());
 		$prevStatus.setVelocity($newStatus.getVelocity());
-	    System.out.println("Internal status updated"); 
+	    System.out.println("Internal status updated :"); 
 	    System.out.println($newStatus.getTime()); 
 end		
 
@@ -119,11 +119,13 @@ end
 // ========== VICTIM SET & UPDATE RULES ==========
 
 // When no victim is set, and a robot is scanned, set him as victim and begin to follow
-rule "Detected 1st victim -> create it"
+rule "Detected 1st victim : create it"
 	salience 90
 	when
 		not (exists Victim())
 		$scanned: ScannedRobotEvent()
+		exists Status()
+		$status : Status()
 	then
 	    Victim victim = new Victim();
 		victim.setName($scanned.getName());
@@ -132,12 +134,29 @@ rule "Detected 1st victim -> create it"
 	    victim.setHeading($scanned.getHeading());
 	    victim.setVelocity($scanned.getVelocity());
 	    victim.setEnergy($scanned.getEnergy());
+		double enemyX = Helper.enemyX($status.getX(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
+		double enemyY = Helper.enemyY($status.getY(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
+		victim.setX(enemyX);
+		victim.setY(enemyY);
+		double firePower = Helper.firePower($distance, $energy);
+		$victim.setFirePower(firePower);
+		double bulletSpeed = Helper.bulletSpeed(firePower);
+		$victim.setBulletSpeed(bulletSpeed);
+		long time = Helper.time($distance, bulletSpeed);
+		$victim.setTime(time);
+	    System.out.println("Planned bullet (firePower, bulletSpeed, time) :");  
+	    System.out.println(firePower);  
+	    System.out.println(bulletSpeed);  
+	    System.out.println(time);
 		insert(victim);
   		System.out.println("Victim created");
+		System.out.println("x, y");
+		System.out.println(enemyX);
+		System.out.println(enemyY);
 end
 
-// Detected victim ===> update it
-rule "Detected victim ===> update info"
+// When detected victim then update it
+rule "Detected victim : update info"
 	salience 89
 	when 
 		exists Victim()
@@ -145,6 +164,8 @@ rule "Detected victim ===> update info"
 		exists ScannedRobotEvent()
 		$scanned : ScannedRobotEvent($same : name)
 		eval($name == $same)
+		exists Status()
+		$status : Status()
 	then
 		$victim.setName($scanned.getName());
 		$victim.setDistance($scanned.getDistance());
@@ -152,13 +173,20 @@ rule "Detected victim ===> update info"
 	    $victim.setHeading($scanned.getHeading());
 	    $victim.setVelocity($scanned.getVelocity());
 	    $victim.setEnergy($scanned.getEnergy());
+		double enemyX = Helper.enemyX($status.getX(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
+		double enemyY = Helper.enemyY($status.getY(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
+		$victim.setX(enemyX);
+		$victim.setY(enemyY);
 	    System.out.println("Updated victim informations :");    
-	    System.out.println($scanned.getName());	 
+	    System.out.println($scanned.getName());	
+		System.out.println("x, y");
+		System.out.println(enemyX);
+		System.out.println(enemyY);
 end
    
 
-// Detected closer robot ===> set as victim
-rule "Detected closer -> update the victim"
+// Detected closer robot : set as victim
+rule "Detected closer : update the victim"
 	salience 88
    	when
    		exists Victim()
@@ -189,30 +217,11 @@ rule "Victim's death"
 	   	System.out.println("VICTIM DESTROYED MOTHERF***ER");
 end
 
-// When a victim exists, update her x and y properties
-rule "Victim exists ===> update her position"
-	salience 87
-	when 
-		exists Victim()
-		$victim : Victim($distance : distance, $bearing : bearing)
-		exists Status()
-		$status : Status($x : x, $y : y, $heading : heading)
-	then
-		double enemyX = Helper.enemyX($x, $heading, $bearing, $distance);
-		double enemyY = Helper.enemyY($y, $heading, $bearing, $distance);
-		$victim.setX(enemyX);
-		$victim.setY(enemyY);
-		System.out.println("Updated enemy position :");
-		System.out.println(enemyX);
-		System.out.println(enemyY);
-end
-
-
 
 // ========== RADAR TURNING RULES ==========
 
 // When there's no robot detected, force a complete turn of radar
-rule "No detected robot -> radar complete turn"
+rule "No detected robot : radar complete turn"
 	salience 79
 	when
 		not (exists ScannedRobotEvent())
@@ -242,7 +251,7 @@ end
 // ========== SHOOTING RULES ==========
 
 // When victim exists : update our fire power
-rule "Exists victim ===> fire power & time update"
+rule "Exists victim : fire power and time update"
 	salience 70
 	when 
 		exists Victim()
@@ -250,20 +259,10 @@ rule "Exists victim ===> fire power & time update"
 		exists Status()
 		$status : Status($energy : energy)
 	then
-		double firePower = Helper.firePower($distance, $energy);
-		$victim.setFirePower(firePower);
-		double bulletSpeed = Helper.bulletSpeed(firePower);
-		$victim.setBulletSpeed(bulletSpeed);
-		long time = Helper.time($distance, bulletSpeed);
-		$victim.setTime(time);
-	    System.out.println("Planned bullet (firePower, bulletSpeed, time) :");  
-	    System.out.println(firePower);  
-	    System.out.println(bulletSpeed);  
-	    System.out.println(time);
 end  
 		
 // When victim exists : predict her future position and turn the gun to it
-rule "Exists victim ===> setGun to predicted position"
+rule "Exists victim : setGun to predicted position"
 	salience 69
 	when
 		exists Victim()
@@ -274,7 +273,7 @@ rule "Exists victim ===> setGun to predicted position"
 		double futureX = Helper.enemyFutureX($enemyX, $enemyHeading, $enemyVelocity, $when);
 		double futureY = Helper.enemyFutureY($enemyY, $enemyHeading, $enemyVelocity, $when);
 		double absDeg = Helper.absoluteBearing($x, $y, futureX, futureY);
-		insert(new Action(Action.GUN_RIGHT, absDeg, 1);
+		insert(new Action(Action.GUN_RIGHT, absDeg, 1));
 	    System.out.println("Victim's next position predicted, aiming.....");  
 end
 		
@@ -290,7 +289,7 @@ rule "Ready ? FIRE !!!"
 		eval($gunHeat == 0)
 		eval($gunTurnRemaining < 10)
 	then 
-		insert(new Action(Action.SHOOT, $firePower, 1);
+		insert(new Action(Action.SHOOT, $firePower, 1));
 	    System.out.println("AND ..... FIIIIIIRRREEEEEEE");  
 end
 
