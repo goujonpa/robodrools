@@ -28,6 +28,9 @@ declare Victim
    futureX: double
    futureY: double
    energy: double
+   time: long
+   firePower: double
+   bulletSpeed: double
 end
 
 declare Status
@@ -186,6 +189,25 @@ rule "Victim's death"
 	   	System.out.println("VICTIM DESTROYED MOTHERF***ER");
 end
 
+// When a victim exists, update her x and y properties
+rule "Victim exists ===> update her position"
+	salience 87
+	when 
+		exists Victim()
+		$victim : Victim($distance : distance, $bearing : bearing)
+		exists Status()
+		$status : Status($x : x, $y : y, $heading : heading)
+	then
+		double enemyX = Helper.enemyX($x, $heading, $bearing, $distance);
+		double enemyY = Helper.enemyY($y, $heading, $bearing, $distance);
+		$victim.setX(enemyX);
+		$victim.setY(enemyY);
+		System.out.println("Updated enemy position :");
+		System.out.println(enemyX);
+		System.out.println(enemyY);
+end
+
+
 
 // ========== RADAR TURNING RULES ==========
 
@@ -217,25 +239,58 @@ rule "Scanned victim : oscillate radar on it"
 	    System.out.println($name);  
 end
 
-// ========== GUN TURNING RULES ==========
+// ========== SHOOTING RULES ==========
 
-// When a victim exists, update her x and y properties
-rule "Victim exists ===> update her position"
-	salience 87
+// When victim exists : update our fire power
+rule "Exists victim ===> fire power & time update"
+	salience 70
 	when 
 		exists Victim()
-		$victim : Victim($distance : distance, $bearing : bearing)
+		$victim : Victim($distance : distance)
 		exists Status()
-		$status : Status($x : x, $y : y, $heading : heading)
+		$status : Status($energy : energy)
 	then
-		double enemyX = Helper.enemyX($x, $heading, $bearing, $distance);
-		double enemyY = Helper.enemyY($y, $heading, $bearing, $distance);
-		$victim.setX(enemyX);
-		$victim.setY(enemyY);
+		double firePower = Helper.firePower($distance, $energy);
+		$victim.setFirePower(firePower);
+		double bulletSpeed = Helper.bulletSpeed(firePower);
+		$victim.setBulletSpeed(bulletSpeed);
+		long time = Helper.time($distance, bulletSpeed);
+		$victim.setTime(time);
+	    System.out.println("Planned bullet (firePower, bulletSpeed, time) :");  
+	    System.out.println(firePower);  
+	    System.out.println(bulletSpeed);  
+	    System.out.println(time);
+end  
+		
+// When victim exists : predict her future position and turn the gun to it
+rule "Exists victim ===> setGun to predicted position"
+	salience 69
+	when
+		exists Victim()
+		$victim : Victim($when : time, $enemyX : x, $enemyY : y, $enemyHeading : heading, $enemyVelocity : velocity)
+		exists Status()
+		$status : Status($x : x, $y : y)
+	then
+		double futureX = Helper.enemyFutureX($enemyX, $enemyHeading, $enemyVelocity, $when);
+		double futureY = Helper.enemyFutureY($enemyY, $enemyHeading, $enemyVelocity, $when);
+		double absDeg = Helper.absoluteBearing($x, $y, futureX, futureY);
+		insert(new Action(Action.GUN_RIGHT, absDeg, 1);
+	    System.out.println("Victim's next position predicted, aiming.....");  
 end
+		
 
-// When a victim exists, update her futureX and futureY properties
-
-	
-
+// When the gun is cool and we're pointing the target, then fire
+rule "Ready ? FIRE !!!"
+	salience 68
+	when 
+		exists Victim()
+		$victim : Victim($firePower : firePower)
+		exists Status()
+		$status : Status($gunHeat : gunHeat, $gunTurnRemaining : gunTurnRemaining)
+		eval($gunHeat == 0)
+		eval($gunTurnRemaining < 10)
+	then 
+		insert(new Action(Action.SHOOT, $firePower, 1);
+	    System.out.println("AND ..... FIIIIIIRRREEEEEEE");  
+end
 

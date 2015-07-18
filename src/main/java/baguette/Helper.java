@@ -110,10 +110,19 @@ public class Helper {
     public static double enemyY(double robotY, double robotHeading, double enemyBearing, double distance){
     	double absBearingDeg = robotHeading + enemyBearing;
     	if (absBearingDeg < 0) absBearingDeg += 360;
-    	return (robotY + Math.sin(Math.toRadians(absBearingDeg)) * distance);
+    	return (robotY + Math.cos(Math.toRadians(absBearingDeg)) * distance);
     	
     }
-
+    
+    // predict enemy future X
+    public static double enemyFutureX(double enemyX, double enemyHeading, double velocity, long when){
+    	return (enemyX + Math.sin(Math.toRadians(enemyHeading)) * velocity * when);	
+    }
+    
+    // predict enemy future Y
+    public static double enemyFutureY(double enemyY, double enemyHeading, double velocity, long when){
+    	return (enemyY + Math.cos(Math.toRadians(enemyHeading)) * velocity * when); 	
+    }
 }
 
 
