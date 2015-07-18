@@ -16,7 +16,7 @@ end
 //
 
 
-// Used to store the victim's informations (if selected)
+// Storing Victim's informations
 declare Victim
    name: String
    x: double
@@ -25,14 +25,13 @@ declare Victim
    bearing: double
    heading: double
    velocity: double
-   futureX: double
-   futureY: double
    energy: double
    time: long
    firePower: double
    bulletSpeed: double
 end
 
+// Storing Robot status informations
 declare Status
 	energy: double
 	others: int
@@ -53,78 +52,66 @@ declare Status
 	scanDirection: int
 end
 
+// ========== CLEANING DOUBLE RULES ==========
+
+rule "WHEN old action THEN clean it"
+	salience 101
+	when
+		$action: Action($time: time)
+		$state : RobotState()
+		eval($time < $state.getTime)
+	then
+	    retract($action);
+	    System.out.println("Rule from last turn cleaned.");
+end
+
 
 // ========== STATUS RULES ==========
 
-// when no internal status, create it
-rule "Without status : create one"
+rule "WHEN no status THEN create one"
 	salience 100
 	when 
-		not (exists Status())
 		$status: RobotState()
 	then
 		Status status = new Status();
-		status.setEnergy($status.getEnergy());
-	    status.setOthers($status.getOthers());
-	    status.setX($status.getX());
-	    status.setY($status.getY());
-	   	status.setDistanceRemaining($status.getDistanceRemaining());
-		status.setGunHeading($status.getGunHeading());
-		status.setGunHeat($status.getGunHeat());
-		status.setGunTurnRemaining($status.getGunTurnRemaining());
-		status.setHeading($status.getHeading());
-		status.setNumRounds($status.getNumRounds());
-		status.setRadarHeading($status.getRadarHeading());
-		status.setRadarTurnRemaining($status.getRadarTurnRemaining());
-		status.setRoundNum($status.getRoundNum());
-		status.setTime($status.getTime());
-		status.setTurnRemaining($status.getTurnRemaining());
-		status.setVelocity($status.getVelocity());
-		status.setScanDirection(1);
 	    insert(status);
-	    System.out.println("Internal status created"); 
+	    System.out.println("Internal status created."); 
 end
     
-
-
-// when internal status, update it
-rule "With status : update it"
+rule "WHEN new turn THEN update status"
 	salience 99
 	when
-		exists Status()
-		$prevStatus: Status()
-		$newStatus: RobotState()
+		$status: Status()
+		$state: RobotState()
 	then
-		$prevStatus.setEnergy($newStatus.getEnergy());
-	    $prevStatus.setOthers($newStatus.getOthers());
-	    $prevStatus.setX($newStatus.getX());
-	    $prevStatus.setY($newStatus.getY());
-	   	$prevStatus.setDistanceRemaining($newStatus.getDistanceRemaining());
-		$prevStatus.setGunHeading($newStatus.getGunHeading());
-		$prevStatus.setGunHeat($newStatus.getGunHeat());
-		$prevStatus.setGunTurnRemaining($newStatus.getGunTurnRemaining());
-		$prevStatus.setHeading($newStatus.getHeading());
-		$prevStatus.setNumRounds($newStatus.getNumRounds());
-		$prevStatus.setRadarHeading($newStatus.getRadarHeading());
-		$prevStatus.setRadarTurnRemaining($newStatus.getRadarTurnRemaining());
-		$prevStatus.setRoundNum($newStatus.getRoundNum());
-		$prevStatus.setTime($newStatus.getTime());
-		$prevStatus.setTurnRemaining($newStatus.getTurnRemaining());
-		$prevStatus.setVelocity($newStatus.getVelocity());
-	    System.out.println("Internal status updated :"); 
-	    System.out.println($newStatus.getTime()); 
+		$status.setEnergy($state.getEnergy());
+	    $status.setOthers($state.getOthers());
+	    $status.setX($state.getX());
+	    $status.setY($state.getY());
+	   	$status.setDistanceRemaining($state.getDistanceRemaining());
+		$status.setGunHeading($state.getGunHeading());
+		$status.setGunHeat($state.getGunHeat());
+		$status.setGunTurnRemaining($state.getGunTurnRemaining());
+		$status.setHeading($state.getHeading());
+		$status.setNumRounds($state.getNumRounds());
+		$status.setRadarHeading($state.getRadarHeading());
+		$status.setRadarTurnRemaining($state.getRadarTurnRemaining());
+		$status.setRoundNum($state.getRoundNum());
+		$status.setTime($state.getTime());
+		$status.setTurnRemaining($state.getTurnRemaining());
+		$status.setVelocity($state.getVelocity());
+	    System.out.println("Internal status updated."); 
+	    System.out.println("#Turn : " + $status.getTime()); 
 end		
 
 
 // ========== VICTIM SET & UPDATE RULES ==========
 
-// When no victim is set, and a robot is scanned, set him as victim and begin to follow
-rule "Detected 1st victim : create it"
-	salience 90
+rule "WHEN 1st victim THEN create it"
+	salience 89
 	when
 		not (exists Victim())
 		$scanned: ScannedRobotEvent()
-		exists Status()
 		$status : Status()
 	then
 	    Victim victim = new Victim();
@@ -138,33 +125,23 @@ rule "Detected 1st victim : create it"
 		double enemyY = Helper.enemyY($status.getY(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
 		victim.setX(enemyX);
 		victim.setY(enemyY);
-		double firePower = Helper.firePower($distance, $energy);
-		$victim.setFirePower(firePower);
+		double firePower = Helper.firePower($scanned.getDistance());
+		victim.setFirePower(firePower);
 		double bulletSpeed = Helper.bulletSpeed(firePower);
-		$victim.setBulletSpeed(bulletSpeed);
-		long time = Helper.time($distance, bulletSpeed);
-		$victim.setTime(time);
-	    System.out.println("Planned bullet (firePower, bulletSpeed, time) :");  
-	    System.out.println(firePower);  
-	    System.out.println(bulletSpeed);  
-	    System.out.println(time);
+		victim.setBulletSpeed(bulletSpeed);
+		long time = Helper.time($scanned.getDistance(), bulletSpeed);
+		victim.setTime(time);
 		insert(victim);
-  		System.out.println("Victim created");
-		System.out.println("x, y");
-		System.out.println(enemyX);
-		System.out.println(enemyY);
+  		System.out.println("Victim created.");
+	    System.out.println("Planned bullet : Power = "+ firePower +" Speed = "+ bulletSpeed +" Time = "+ time);  
 end
 
-// When detected victim then update it
-rule "Detected victim : update info"
-	salience 89
+rule "WHEN new turn and detected old victim THEN update victim's informations"
+	salience 88
 	when 
-		exists Victim()
 		$victim : Victim($name : name)
-		exists ScannedRobotEvent()
 		$scanned : ScannedRobotEvent($same : name)
 		eval($name == $same)
-		exists Status()
 		$status : Status()
 	then
 		$victim.setName($scanned.getName());
@@ -177,23 +154,23 @@ rule "Detected victim : update info"
 		double enemyY = Helper.enemyY($status.getY(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
 		$victim.setX(enemyX);
 		$victim.setY(enemyY);
-	    System.out.println("Updated victim informations :");    
-	    System.out.println($scanned.getName());	
-		System.out.println("x, y");
-		System.out.println(enemyX);
-		System.out.println(enemyY);
+		double firePower = Helper.firePower($scanned.getDistance());
+		$victim.setFirePower(firePower);
+		double bulletSpeed = Helper.bulletSpeed(firePower);
+		$victim.setBulletSpeed(bulletSpeed);
+		long time = Helper.time($scanned.getDistance(), bulletSpeed);
+		$victim.setTime(time);
+	    System.out.println("Updated victim informations.");    
 end
    
 
-// Detected closer robot : set as victim
-rule "Detected closer : update the victim"
-	salience 88
+rule "WHEN detected closer victim than old one THEN update to new victim"
+	salience 87
    	when
-   		exists Victim()
 		$victim : Victim()
-		exists ScannedRobotEvent()
       	$scanned: ScannedRobotEvent()
-		eval($victim.getDistance() > $scanned.getDistance());
+		eval($victim.getDistance() > $scanned.getDistance())
+		$status : Status()
    	then
 		$victim.setName($scanned.getName());
 		$victim.setDistance($scanned.getDistance());
@@ -201,17 +178,25 @@ rule "Detected closer : update the victim"
 	    $victim.setHeading($scanned.getHeading());
 	    $victim.setVelocity($scanned.getVelocity());
 	    $victim.setEnergy($scanned.getEnergy());
-	    System.out.println("New Victim (closer)");    
-	    System.out.println($scanned.getName());	    
+		double enemyX = Helper.enemyX($status.getX(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
+		double enemyY = Helper.enemyY($status.getY(), $status.getHeading(), $scanned.getBearing(), $scanned.getDistance());
+		$victim.setX(enemyX);
+		$victim.setY(enemyY);
+		double firePower = Helper.firePower($scanned.getDistance());
+		$victim.setFirePower(firePower);
+		double bulletSpeed = Helper.bulletSpeed(firePower);
+		$victim.setBulletSpeed(bulletSpeed);
+		long time = Helper.time($scanned.getDistance(), bulletSpeed);
+		$victim.setTime(time);
+	    System.out.println("Closer victim detected and targetted");    
 end
 
 
-// Eliminate current Victim() Fact when killed
-rule "Victim's death"
-	salience 88
+rule "WHEN old victim is dead THEN "
+	salience 90
 	when
-	   	$victim: Victim ($victimName: name)
-	   	RobotDeathEvent( name == $victimName )
+	   	$victim: Victim()
+	   	RobotDeathEvent(name == $victim.getName())
 	then 
 	   	retract($victim);
 	   	System.out.println("VICTIM DESTROYED MOTHERF***ER");
@@ -220,76 +205,61 @@ end
 
 // ========== RADAR TURNING RULES ==========
 
-// When there's no robot detected, force a complete turn of radar
-rule "No detected robot : radar complete turn"
-	salience 79
+rule "WHEN no detected robot THEN radar complete turn"
+	salience 80
 	when
 		not (exists ScannedRobotEvent())
+		$state : RobotState()
+		$status : Status()
 	then
-		insert (new Action(Action.RADAR_RIGHT, 360, 1));
+		insert(new Action(Action.RADAR_RIGHT, 360, 1, $state.getTime()));
+		$status.setScanDirection(1);
 		System.out.println("Radar complete turn initialized");
 end
 
 
-// Scanned event : turn radar oscillating on the victim
-rule "Scanned victim : oscillate radar on it"
-	salience 80
+rule "WHEN scanned victim THEN oscillate radar on it"
+	salience 79
 	when 
-		exists Victim()
-		exists ScannedRobotEvent()
 		$event : ScannedRobotEvent($same : name)
 		$victim : Victim($name : name)
 		eval($name == $same)
 		$status : Status()
+		$state : RobotState()
 	then
 		$status.setScanDirection(-1 * $status.getScanDirection());
-		insert(new Action(Action.RADAR_RIGHT, 360 * $status.getScanDirection(), 1));
-	    System.out.println("OSCILLATION on :");
-	    System.out.println($name);  
+		insert(new Action(Action.RADAR_RIGHT, 360 * $status.getScanDirection(), 1, $state.getTime()));
+	    System.out.println("OSCILLATION on :"+ $victim.getName());
 end
+
 
 // ========== SHOOTING RULES ==========
 
-// When victim exists : update our fire power
-rule "Exists victim : fire power and time update"
-	salience 70
-	when 
-		exists Victim()
-		$victim : Victim($distance : distance)
-		exists Status()
-		$status : Status($energy : energy)
-	then
-end  
-		
-// When victim exists : predict her future position and turn the gun to it
-rule "Exists victim : setGun to predicted position"
+rule "WHEN exists victim THEN set gun to predicted position"
 	salience 69
 	when
-		exists Victim()
-		$victim : Victim($when : time, $enemyX : x, $enemyY : y, $enemyHeading : heading, $enemyVelocity : velocity)
-		exists Status()
-		$status : Status($x : x, $y : y)
+		$victim : Victim()
+		$status : Status()
+		$state : RobotState()
 	then
-		double futureX = Helper.enemyFutureX($enemyX, $enemyHeading, $enemyVelocity, $when);
-		double futureY = Helper.enemyFutureY($enemyY, $enemyHeading, $enemyVelocity, $when);
-		double absDeg = Helper.absoluteBearing($x, $y, futureX, futureY);
-		insert(new Action(Action.GUN_RIGHT, absDeg, 1));
+		double futureX = Helper.enemyFutureX($victim.getX(), $victim.getHeading(), $victim.getVelocity(), $victim.getTime());
+		double futureY = Helper.enemyFutureY($victim.getY(), $victim.getHeading(), $victim.getVelocity(), $victim.getTime());
+		double absDeg = Helper.absoluteBearing($status.getX(), $status.getY(), futureX, futureY);
+		double finalAngle = Helper.normalizeBearing(absDeg - $status.getGunHeading());
+		insert(new Action(Action.GUN_RIGHT, finalAngle, 1, $state.getTime()));
 	    System.out.println("Victim's next position predicted, aiming.....");  
 end
 		
-
-// When the gun is cool and we're pointing the target, then fire
-rule "Ready ? FIRE !!!"
+rule "WHEN gun is cool and on target THEN FIRE"
 	salience 68
 	when 
-		exists Victim()
-		$victim : Victim($firePower : firePower)
-		exists Status()
+		$victim : Victim()
 		$status : Status($gunHeat : gunHeat, $gunTurnRemaining : gunTurnRemaining)
-		eval($gunHeat == 0)
+		eval($gunHeat == 0.0)
 		eval($gunTurnRemaining < 10)
+		$state : RobotState()
 	then 
-		insert(new Action(Action.SHOOT, $firePower, 1));
+		insert(new Action(Action.SHOOT, $victim.getFirePower(), 1, $state.getTime()));
 	    System.out.println("AND ..... FIIIIIIRRREEEEEEE");  
 end
 

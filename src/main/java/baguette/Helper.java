@@ -83,8 +83,8 @@ public class Helper {
     }    
     
     // Calculates the firePower in function of the enemy distance
-    public static double firePower(double enemyDistance, double remainingEnergy) {
-    	return (Math.min(500 / enemyDistance, 0.1 * remainingEnergy));
+    public static double firePower(double enemyDistance) {
+    	return (Math.min(500 / enemyDistance, 3));
     }
     
     // Calculates the bulletSpeed in function of the firePower

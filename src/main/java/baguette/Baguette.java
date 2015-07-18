@@ -203,4 +203,5 @@ public class Baguette extends AdvancedRobot {
     	DEBUG.message("received on scanned robot");
     	currentReferencedFacts.add(ksession.insert(event));
     }
+    
 }

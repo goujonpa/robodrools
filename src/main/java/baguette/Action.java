@@ -3,9 +3,10 @@ package baguette;
 import robocode.AdvancedRobot;
 
 public class Action {
-    private int        type;
-    private double     parameter;
-    private int        priority;
+    private int        	type;
+    private double     	parameter;
+    private int        	priority;
+    private int 		time;
 
     private AdvancedRobot robot;   // Reference to the bot who will execute the action
 
@@ -24,10 +25,19 @@ public class Action {
     public Action() {
     }
 
-    public Action(int type, double parameter, int priority) {
+    public Action(int type, double parameter, int priority, int time) {
         this.type = type;
         this.parameter = parameter;
         this.priority = priority;
+        this.time = time;
+    }
+    
+    public int getTime(){
+    	return time;
+    }
+    
+    public void setTime(int time) {
+    	this.time = time;
     }
 
     public double getParameter() {

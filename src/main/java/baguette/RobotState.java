@@ -104,10 +104,7 @@ public class RobotState {
     }
 
     public String toString(){
-    	return "State(x:"+x+", y:"+y+", velocity:"+velocity+
-    	                     ", energy:"+energy+", heading:"+heading+
-    	                     ", distanceRemaining:"+distanceRemaining+")";
-    	
+    	return "State(gunturn:"+gunTurnRemaining+"x:"+x+", y:"+y+", velocity:"+velocity+", energy:"+energy+", heading:"+heading+", distanceRemaining:"+distanceRemaining+")";	
     }
 
 }
