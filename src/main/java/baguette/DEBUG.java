@@ -1,7 +1,6 @@
 package baguette;
 
 import java.util.List;
-
 import org.drools.runtime.StatefulKnowledgeSession;
 import org.drools.runtime.rule.FactHandle;
 

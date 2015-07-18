@@ -2,7 +2,6 @@ package baguette;
 
 import java.util.Vector;
 import java.awt.Color;
-import java.awt.geom.Point2D;
 import org.drools.KnowledgeBase;
 import org.drools.KnowledgeBaseFactory;
 import org.drools.builder.KnowledgeBuilder;
@@ -12,7 +11,6 @@ import org.drools.io.ResourceFactory;
 import org.drools.runtime.StatefulKnowledgeSession;
 import org.drools.runtime.rule.FactHandle;
 import org.drools.runtime.rule.QueryResultsRow;
-import robocode.AdvancedRobot;
 import robocode.BulletHitBulletEvent;
 import robocode.BulletHitEvent;
 import robocode.BulletMissedEvent;
@@ -20,12 +18,11 @@ import robocode.HitByBulletEvent;
 import robocode.HitRobotEvent;
 import robocode.HitWallEvent;
 import robocode.RobotDeathEvent;
-import robocode.RobotStatus;
 import robocode.ScannedRobotEvent;
-import robocode.StatusEvent;
+import robocode.TeamRobot;
 
 
-public class Baguette extends AdvancedRobot {
+public class Baguette extends TeamRobot {
 
     public static String RULES_FILE = "baguette/rules/robot_rules.drl";
     public static String CONSULT_ACTIONS = "consult_actions";

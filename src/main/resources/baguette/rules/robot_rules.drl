@@ -50,10 +50,13 @@ declare Status
 	scanDirection: int
 end
 
+
+
+
 // ========== CLEANING DOUBLE RULES ==========
 
 rule "WHEN old action THEN clean it"
-	salience 101
+	salience 120
 	when
 		$action: Action($time: time)
 		$state : RobotState()
@@ -63,8 +66,32 @@ rule "WHEN old action THEN clean it"
 	    System.out.println("Rule from last turn cleaned.");
 end
 
+// ========== TEST RULES ===========
+
+rule "WHEN scanned is teammate THEN display it"
+	salience 118
+	when
+		$scanned : ScannedRobotEvent()
+		$state : RobotState()
+		eval($state.isTeamMate($scanned.getName()))
+	then
+	    System.out.println("TEAMMATE !!");
+end
+
 
 // ========== STATUS RULES ==========
+
+rule "WHEN others decrease from one turn to the next THEN retract victim"
+	salience 119
+	when 
+		$state: RobotState()
+		$status: Status()
+		$victim: Victim()
+		eval($status.getOthers() > $state.getOthers())
+	then
+		retract($victim);
+	    System.out.println("Someone's dead, victim update."); 
+end
 
 rule "WHEN no status THEN create one"
 	salience 100
@@ -191,17 +218,6 @@ rule "WHEN detected closer victim than old one THEN update to new victim"
 end
 
 
-rule "WHEN old victim is dead THEN "
-	salience 90
-	when
-	   	$victim: Victim()
-	   	RobotDeathEvent(name == $victim.getName())
-	then 
-	   	retract($victim);
-	   	System.out.println("VICTIM DESTROYED MOTHERF***ER");
-end
-
-
 // ========== RADAR TURNING RULES ==========
 
 rule "WHEN no detected robot THEN radar complete turn"
@@ -228,7 +244,7 @@ rule "WHEN scanned victim THEN oscillate radar on it"
 	then
 		$status.setScanDirection(-1 * $status.getScanDirection());
 		insert(new Action(Action.RADAR_RIGHT, 360 * $status.getScanDirection(), 1, $state.getTime()));
-	    System.out.println("OSCILLATION on :"+ $victim.getName());
+	    System.out.println("Oscillate on :"+ $victim.getName());
 end
 
 

@@ -1,6 +1,6 @@
 package baguette;
 
-import robocode.AdvancedRobot;
+import robocode.TeamRobot;
 
 public class RobotState {
     private final double distanceRemaining;
@@ -19,8 +19,9 @@ public class RobotState {
     private final double turnRemaining;
     private final double velocity;
     private final double x;
+    private final String[] teamMates;
 
-    public RobotState(AdvancedRobot robot){
+    public RobotState(TeamRobot robot){
         distanceRemaining = robot.getDistanceRemaining();
         energy = robot.getEnergy();
         gunHeading = robot.getGunHeading();
@@ -35,10 +36,24 @@ public class RobotState {
         time = robot.getTime();
         turnRemaining = robot.getTurnRemaining();
         velocity = robot.getVelocity();
+        teamMates = robot.getTeammates();
         x = robot.getX();
         y = robot.getY();
     }
-
+    
+    public boolean isTeamMate(String teamMate){
+    	boolean result = false;
+    	for (String mate : this.teamMates){
+    		if (teamMate.equals(mate)) result = true;
+    		DEBUG.message(mate);
+    	}
+    	return result;
+    }
+    
+    public String[] getTeamMates(){
+    	return teamMates;
+    }
+        
     public double getDistanceRemaining() {
         return distanceRemaining;
     }
