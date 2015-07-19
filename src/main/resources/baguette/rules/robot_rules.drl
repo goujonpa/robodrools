@@ -48,6 +48,7 @@ declare Status
 	turnRemaining: double
 	velocity: double
 	scanDirection: int
+	moveDirection: int
 end
 
 
@@ -88,6 +89,7 @@ rule "WHEN no status THEN create one"
 		$status: RobotState()
 	then
 		Status status = new Status();
+		status.setMoveDirection(1);
 	    insert(status);
 	    System.out.println("Internal status created."); 
 end
@@ -114,6 +116,7 @@ rule "WHEN new turn THEN update status"
 		$status.setTime($state.getTime());
 		$status.setTurnRemaining($state.getTurnRemaining());
 		$status.setVelocity($state.getVelocity());
+		$status.setMoveDirection(-1 * $status.getMoveDirection());
 	    System.out.println("Internal status updated."); 
 	    System.out.println("#Turn : " + $status.getTime()); 
 end		
@@ -128,7 +131,7 @@ rule "WHEN 1st victim THEN create it"
 		$scanned: ScannedRobotEvent()
 		$status : Status()
 		$state: RobotState()
-		eval(not($state.isTeamMate($scanned.getName())))
+		eval($state.isTeamMate($scanned.getName()) == false)
 	then
 	    Victim victim = new Victim();
 		victim.setName($scanned.getName());
@@ -160,7 +163,7 @@ rule "WHEN new turn and detected old victim THEN update victim's informations"
 		$status : Status()
 		$state : RobotState()
 		eval($victim.getName() == $scanned.getName())
-		eval(not($state.isTeamMate($scanned.getName())))
+		eval($state.isTeamMate($scanned.getName()) == false)
 	then
 		$victim.setName($scanned.getName());
 		$victim.setDistance($scanned.getDistance());
@@ -190,7 +193,7 @@ rule "WHEN detected closer victim than old one THEN update to new victim"
       	$status : Status()
       	$state : RobotState()
 		eval($victim.getDistance() > $scanned.getDistance())
-		eval(not($state.isTeamMate($scanned.getName())))
+		eval($state.isTeamMate($scanned.getName()) == false)
    	then
 		$victim.setName($scanned.getName());
 		$victim.setDistance($scanned.getDistance());
@@ -284,7 +287,8 @@ rule "WHEN no victim THEN random moves" // random moves based on "crazy" source
 		$status: Status()
 	then
 		insert(new Action(Action.AHEAD, 1000, 1, $state.getTime()));
-		insert(new Action(Action.TANK_RIGHT, 90, 1, $state.getTime()));
+		double angle = 360 * Math.random() - 180;
+		insert(new Action(Action.TANK_RIGHT, angle, 1, $state.getTime()));
 	    System.out.println("Random move initialized");
 end  
 
@@ -300,6 +304,20 @@ rule "WHEN victim is set THEN stay close"
 	    System.out.println("Movements updated.");  
 end
 
+rule "WHEN victim is set and stopped THEN strafe"
+	salience 58
+	when 
+		$victim: Victim()
+		$status: Status()
+		$state: RobotState()
+		eval($status.getDistanceRemaining() == 0.0)
+	then
+		insert(new Action(Action.TANK_RIGHT, ($victim.getBearing() + 90), 1, $state.getTime()));
+		insert(new Action(Action.AHEAD, (100 * $status.getMoveDirection()), 1, $state.getTime()));
+		System.out.println("Strafing.");
+end
+		
+	
 
 
 
