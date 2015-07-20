@@ -1,4 +1,4 @@
-package baguette;
+package baguetteSOLO;
 
 import java.util.List;
 import java.util.Vector;
@@ -74,7 +74,7 @@ public class RulesChecker {
         Action action;
         Vector<Action> actionsList = new Vector<Action>();
 
-        for (QueryResultsRow result : ksession.getQueryResults(BaguetteTeamIndividual.CONSULT_ACTIONS)) {
+        for (QueryResultsRow result : ksession.getQueryResults(BaguetteSOLO.CONSULT_ACTIONS)) {
             action = (Action) result.get("action");  
             action.setRobot(null); 
             actionsList.add(action);

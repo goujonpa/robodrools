@@ -1,6 +1,6 @@
 #Robocode robot team
 #Sat Jul 18 16:47:11 2015
-team.members=baguette.Baguette,baguette.Baguette,baguette.Baguette,baguette.Baguette,baguette.Baguette
+team.members=baguette.BaguetteTeamIndividual,baguette.BaguetteTeamIndividual,baguette.BaguetteTeamIndividual,baguette.BaguetteTeamIndividual,baguette.BaguetteTeamIndividual
 team.author.name=Paul GOUJON and Hugo RODDE
 robocode.version=1.9.2
 team.webpage=http://github.com/goujonpa
