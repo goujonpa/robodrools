@@ -116,7 +116,6 @@ rule "WHEN new turn THEN update status"
 		$status.setTime($state.getTime());
 		$status.setTurnRemaining($state.getTurnRemaining());
 		$status.setVelocity($state.getVelocity());
-		$status.setMoveDirection(-1 * $status.getMoveDirection());
 	    System.out.println("Internal status updated."); 
 	    System.out.println("#Turn : " + $status.getTime()); 
 end		
@@ -292,37 +291,39 @@ rule "WHEN no victim THEN random moves" // random moves based on "crazy" source
 	    System.out.println("Random move initialized");
 end  
 
-rule "WHEN victim is set THEN stay close"
+rule "WHEN stopped THEN switch move direction"
 	salience 59
+	when 
+		$state : RobotState()
+		$status : Status()
+		eval($status.getVelocity() == 0)
+	then
+		$status.setMoveDirection(-1 * $status.getMoveDirection());
+	    System.out.println("Switch move direction.");
+end
+	
+rule "WHEN 20 turns passed THEN switch move direction"
+	salience 58
+	when 
+		$state : RobotState()
+		$status : Status()
+		eval($status.getTime() % 20 == 0)
+	then
+		$status.setMoveDirection(-1 * $status.getMoveDirection());
+	    System.out.println("Switch move direction.");
+end
+
+rule "WHEN victim is set THEN circling"
+	salience 57
 	when 
 		$victim: Victim()
 		$status: Status()
 		$state: RobotState()
 	then 
-		insert(new Action(Action.TANK_RIGHT, $victim.getBearing(), 1, $state.getTime()));
-		insert(new Action(Action.AHEAD, ($victim.getDistance() - 100), 1, $state.getTime()));
-	    System.out.println("Movements updated.");  
+		double angle = Helper.normalizeBearing($victim.getBearing() + 90 - (15 * $status.getMoveDirection()));
+		insert(new Action(Action.TANK_RIGHT, angle, 1, $state.getTime()));
+		insert(new Action(Action.AHEAD, (1000 * $status.getMoveDirection()), 1, $state.getTime()));
+	    System.out.println("Circling");  
 end
-
-rule "WHEN victim is set and stopped THEN strafe"
-	salience 58
-	when 
-		$victim: Victim()
-		$status: Status()
-		$state: RobotState()
-		eval($status.getDistanceRemaining() == 0.0)
-	then
-		insert(new Action(Action.TANK_RIGHT, ($victim.getBearing() + 90), 1, $state.getTime()));
-		insert(new Action(Action.AHEAD, (100 * $status.getMoveDirection()), 1, $state.getTime()));
-		System.out.println("Strafing.");
-end
-		
-	
-
-
-
-
-
-
 
 
