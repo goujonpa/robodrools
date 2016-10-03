@@ -18,3 +18,4 @@ Implemented :
 
 GREAT THANKS :
 To the author of http://mark.random-article.com/weber/java/robocode/ on which I'm based to develop my drools rules
+
