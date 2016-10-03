@@ -1,12 +1,20 @@
-# robodrools
-Java + Drools school project : Robocode leaded by drools
+# robodrools - Java + Drools school project : Robocode leaded by drools rules base
 
-# README.md coming soon
-TO DO LIST :
-- Translate the project from spanish to english : Done
-- Implement new rules : Done
-- Refactoring the project to get a better repo organisation : Done
-- Make a good readme : Maybe one day
+School IA project : Robocode leaded by drools rules base
+
+## Context
+
+Aim was to win an IA championship at the Universidade Federal de Pernambuco based on the game "Robocode", using a drools-based rules base.
+
+FINAL POSITION : WINNER !!!
+
+## Realisation
+
+Implemented :
+- Robocode using java language
+- Drools rules base using drools language
+
+## Thanks you
 
 GREAT THANKS :
 To the author of http://mark.random-article.com/weber/java/robocode/ on which I'm based to develop my drools rules
